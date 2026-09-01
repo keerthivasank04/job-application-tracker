@@ -1,19 +1,51 @@
 {
   "name": "job_tracker",
+  "type": "module",
   "version": "1.0.0",
   "description": "��#\u0000 \u0000J\u0000o\u0000b\u0000 \u0000T\u0000r\u0000a\u0000c\u0000k\u0000e\u0000r\u0000\r\u0000 \u0000",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "nodemon --exec node --loader tsx index.js",
+    "build": "tsc",
+    "start": "node index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "@prisma/orm-postgres": "^8.0.0-rc.8",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+    "@prisma/cli-engine": "^0.2.3",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^26.4.0",
+    "@types/supertest": "^2.0.12",
+    "@types/bcrypt": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/express": "^4.17.17",
+    "jest": "^29.5.0",
+    "nodemon": "^3.1.14",
+    "prisma": "^8.0.0-rc.10",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keerthivasank04/job-application-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keerthivasank04/job-application-tracker/issues"
+  },
+  "homepage": "https://github.com/keerthivasank04/job-application-tracker#readme"
 }
