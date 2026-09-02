@@ -4,15 +4,15 @@ A type-safe REST API backend for tracking your job applications, built with **Ex
 
 ## Features
 
-- ✅ User registration and login with JWT authentication
-- ✅ Create, view, update, and delete job applications
-- ✅ Filter applications by status and company name
-- ✅ Cursor-based pagination for large datasets
-- ✅ Export your applications as CSV (memory-efficient streaming)
-- ✅ Admin statistics dashboard
-- ✅ Input validation on all endpoints
-- ✅ Ownership enforcement — users can only access their own data
-- ✅ Full TypeScript type safety with Prisma 8 contract-first ORM
+- User registration and login with JWT authentication
+- Create, view, update, and delete job applications
+- Filter applications by status and company name
+- Cursor-based pagination for large datasets
+- Export your applications as CSV (memory-efficient streaming)
+- Admin statistics dashboard
+- Input validation on all endpoints
+- Ownership enforcement — users can only access their own data
+- Full TypeScript type safety with Prisma 8 contract-first ORM
 
 ## Tech Stack
 
@@ -89,16 +89,16 @@ Server runs at: `http://localhost:3000`
 
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|:---:|---|
-| GET | `/health` | ❌ | Health check |
-| POST | `/auth/signup` | ❌ | Register a new user |
-| POST | `/auth/login` | ❌ | Login and receive JWT token |
-| GET | `/applications` | ✅ | List your applications (paginated) |
-| POST | `/applications` | ✅ | Create a new application |
-| GET | `/applications/:id` | ✅ | Get a single application |
-| PATCH | `/applications/:id` | ✅ | Update an application |
-| DELETE | `/applications/:id` | ✅ | Delete an application |
-| GET | `/export/csv` | ✅ | Download all applications as CSV |
-| GET | `/admin/stats` | ✅ | Aggregated user statistics |
+| GET | `/health` | Health check |
+| POST | `/auth/signup` |Register a new user |
+| POST | `/auth/login` |Login and receive JWT token |
+| GET | `/applications` |List your applications (paginated) |
+| POST | `/applications` |Create a new application |
+| GET | `/applications/:id` | Get a single application |
+| PATCH | `/applications/:id` | Update an application |
+| DELETE | `/applications/:id` | Delete an application |
+| GET | `/export/csv` | Download all applications as CSV |
+| GET | `/admin/stats` | Aggregated user statistics |
 
 ### Query Parameters (GET /applications)
 | Parameter | Description | Example |
