@@ -5,7 +5,8 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "types": [
-      "node"
+      "node",
+      "jest"
     ],
     "strict": true,
     "skipLibCheck": true,

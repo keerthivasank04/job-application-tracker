@@ -5,11 +5,11 @@
   "description": "��#\u0000 \u0000J\u0000o\u0000b\u0000 \u0000T\u0000r\u0000a\u0000c\u0000k\u0000e\u0000r\u0000\r\u0000 \u0000",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec node --loader tsx index.js",
-    "build": "tsc",
-    "start": "node index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "dev": "nodemon --exec node --loader tsx src/index.ts",
+    "build": "node ./node_modules/typescript/bin/tsc",
+    "start": "node --loader tsx src/index.ts",
+    "test": "node --loader ts-node/esm --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:watch": "node --loader ts-node/esm --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch",
     "postinstall": "prisma skills sync || exit 0",
     "contract:emit": "prisma contract emit"
   },

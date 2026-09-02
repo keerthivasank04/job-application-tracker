@@ -1,13 +1,26 @@
+import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-export function authMiddleware(req, res, next) {
+interface JwtPayload {
+  userId: number;
+  email?: string;
+}
+
+export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' });
   }
+
   const token = authHeader.split(' ')[1];
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    return res.status(500).json({ error: 'Server authentication misconfiguration' });
+  }
+
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });
