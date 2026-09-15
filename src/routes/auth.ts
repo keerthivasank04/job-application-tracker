@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { db } from '../prisma/db';
 import { validateSignup, validateLogin } from '../middleware/validate';
+import { authLimiter } from '../middleware/rate-limiter';
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ router.post('/signup', validateSignup, async (req: Request, res: Response) => {
   }
 });
 
-router.post('/login', validateLogin, async (req: Request, res: Response) => {
+router.post('/login', authLimiter, validateLogin, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
