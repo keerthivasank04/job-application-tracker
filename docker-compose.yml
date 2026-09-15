@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jobtracker-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jobtracker_user
+      POSTGRES_PASSWORD: jobtracker_password
+      POSTGRES_DB: jobtracker_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobtracker_user -d jobtracker_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jobtracker-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: "postgresql://jobtracker_user:jobtracker_password@postgres:5432/jobtracker_db"
+      JWT_SECRET: "development-super-secret-jwt-key-change-in-production-12345"
+      ALLOWED_ORIGIN: "*"
+
+volumes:
+  postgres_data:
