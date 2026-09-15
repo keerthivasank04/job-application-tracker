@@ -42,10 +42,12 @@ export function validateLogin(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
- * Validates creating a new application
+ * Validates creating a new application.
+ * Required: company, role.
+ * Optional: status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl.
  */
 export function validateCreateApplication(req: Request, res: Response, next: NextFunction) {
-  const { company, role, status } = req.body;
+  const { company, role, status, salaryMin, salaryMax } = req.body;
 
   if (!company || typeof company !== 'string' || company.trim().length === 0) {
     return res.status(400).json({ error: 'Company name is required and cannot be empty' });
@@ -61,14 +63,26 @@ export function validateCreateApplication(req: Request, res: Response, next: Nex
     });
   }
 
+  if (salaryMin !== undefined && (typeof salaryMin !== 'number' || salaryMin < 0)) {
+    return res.status(400).json({ error: 'salaryMin must be a non-negative number' });
+  }
+
+  if (salaryMax !== undefined && (typeof salaryMax !== 'number' || salaryMax < 0)) {
+    return res.status(400).json({ error: 'salaryMax must be a non-negative number' });
+  }
+
+  if (salaryMin !== undefined && salaryMax !== undefined && salaryMin > salaryMax) {
+    return res.status(400).json({ error: 'salaryMin cannot be greater than salaryMax' });
+  }
+
   next();
 }
 
 /**
- * Validates updating an application
+ * Validates updating an application (all fields are optional).
  */
 export function validateUpdateApplication(req: Request, res: Response, next: NextFunction) {
-  const { company, role, status } = req.body;
+  const { company, role, status, salaryMin, salaryMax } = req.body;
 
   if (company !== undefined && (typeof company !== 'string' || company.trim().length === 0)) {
     return res.status(400).json({ error: 'Company cannot be empty' });
@@ -82,6 +96,39 @@ export function validateUpdateApplication(req: Request, res: Response, next: Nex
     return res.status(400).json({
       error: `Invalid status '${status}'. Must be one of: ${VALID_STATUSES.join(', ')}`,
     });
+  }
+
+  if (salaryMin !== undefined && (typeof salaryMin !== 'number' || salaryMin < 0)) {
+    return res.status(400).json({ error: 'salaryMin must be a non-negative number' });
+  }
+
+  if (salaryMax !== undefined && (typeof salaryMax !== 'number' || salaryMax < 0)) {
+    return res.status(400).json({ error: 'salaryMax must be a non-negative number' });
+  }
+
+  if (salaryMin !== undefined && salaryMax !== undefined && salaryMin > salaryMax) {
+    return res.status(400).json({ error: 'salaryMin cannot be greater than salaryMax' });
+  }
+
+  next();
+}
+
+/**
+ * Validates updating a user profile (all fields are optional).
+ */
+export function validateUpdateProfile(req: Request, res: Response, next: NextFunction) {
+  const { name, linkedinUrl, githubUrl } = req.body;
+
+  if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
+    return res.status(400).json({ error: 'Name cannot be empty' });
+  }
+
+  if (linkedinUrl !== undefined && typeof linkedinUrl !== 'string') {
+    return res.status(400).json({ error: 'linkedinUrl must be a string' });
+  }
+
+  if (githubUrl !== undefined && typeof githubUrl !== 'string') {
+    return res.status(400).json({ error: 'githubUrl must be a string' });
   }
 
   next();

@@ -1,17 +1,38 @@
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
+  id           Int             @id @default(autoincrement())
+  email        String          @unique
   passwordHash String
-  createdAt    DateTime      @default(now())
+  name         String?
+  linkedinUrl  String?
+  githubUrl    String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   applications Application[]
 }
 
 model Application {
-  id          Int      @id @default(autoincrement())
-  company     String
-  role        String
-  status      String   @default("Applied")
-  appliedDate DateTime @default(now())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  id            Int             @id @default(autoincrement())
+  company       String
+  role          String
+  status        String          @default("Applied")
+  notes         String?
+  salaryMin     Int?
+  salaryMax     Int?
+  currency      String?         @default("USD")
+  jobLocation   String?
+  jobPostUrl    String?
+  appliedDate   DateTime        @default(now())
+  userId        Int
+  user          User            @relation(fields: [userId], references: [id])
+  statusHistory StatusHistory[]
+}
+
+model StatusHistory {
+  id            Int         @id @default(autoincrement())
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+  fromStatus    String
+  toStatus      String
+  notes         String?
+  changedAt     DateTime    @default(now())
 }

@@ -10,13 +10,19 @@ router.use(authMiddleware);
 // CREATE application
 router.post('/', validateCreateApplication, async (req: Request, res: Response) => {
   try {
-    const { company, role, status } = req.body;
+    const { company, role, status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl } = req.body;
     const userId = req.user!.userId;
 
     const application = await db.orm.Application.create({
       company: company.trim(),
       role: role.trim(),
       status: status || 'Applied',
+      notes: notes ?? null,
+      salaryMin: salaryMin ?? null,
+      salaryMax: salaryMax ?? null,
+      currency: currency ?? 'USD',
+      jobLocation: jobLocation ?? null,
+      jobPostUrl: jobPostUrl ?? null,
       userId,
     });
 
@@ -93,7 +99,36 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// UPDATE application
+// GET status history for an application
+router.get('/:id/history', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const application = await db.orm.Application.where({ id }).first();
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (application.userId !== req.user!.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const history = await db.orm.StatusHistory
+      .where({ applicationId: id })
+      .orderBy((h: any) => h.changedAt.asc())
+      .all();
+
+    res.json(history);
+  } catch (error) {
+    console.error('Get history error:', error);
+    res.status(500).json({ error: 'Failed to fetch status history' });
+  }
+});
+
+// UPDATE application — auto-logs StatusHistory when status changes
 router.patch('/:id', validateUpdateApplication, async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -110,13 +145,31 @@ router.patch('/:id', validateUpdateApplication, async (req: Request, res: Respon
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const { company, role, status } = req.body;
+    const { company, role, status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl } = req.body;
     const updateData: Record<string, any> = {};
+
     if (company !== undefined) updateData.company = company.trim();
     if (role !== undefined) updateData.role = role.trim();
     if (status !== undefined) updateData.status = status;
+    if (notes !== undefined) updateData.notes = notes;
+    if (salaryMin !== undefined) updateData.salaryMin = salaryMin;
+    if (salaryMax !== undefined) updateData.salaryMax = salaryMax;
+    if (currency !== undefined) updateData.currency = currency;
+    if (jobLocation !== undefined) updateData.jobLocation = jobLocation;
+    if (jobPostUrl !== undefined) updateData.jobPostUrl = jobPostUrl;
 
     const updated = await db.orm.Application.where({ id }).update(updateData);
+
+    // When status changes, record the transition in StatusHistory
+    if (status !== undefined && status !== application.status) {
+      await db.orm.StatusHistory.create({
+        applicationId: id,
+        fromStatus: application.status,
+        toStatus: status,
+        notes: notes ?? null,
+      });
+    }
+
     res.json(updated);
   } catch (error) {
     console.error('Update application error:', error);
