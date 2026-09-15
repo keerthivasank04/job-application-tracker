@@ -1,7 +1,11 @@
 import express, { type Request, type Response } from 'express';
 import { db } from '../prisma/db';
 import { authMiddleware } from '../middleware/auth';
-import { validateCreateApplication, validateUpdateApplication } from '../middleware/validate';
+import {
+  validateCreateApplication,
+  validateUpdateApplication,
+  validateCreateInterview,
+} from '../middleware/validate';
 
 const router = express.Router();
 
@@ -125,6 +129,71 @@ router.get('/:id/history', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Get history error:', error);
     res.status(500).json({ error: 'Failed to fetch status history' });
+  }
+});
+
+// CREATE interview round for an application
+router.post('/:id/interviews', validateCreateInterview, async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const application = await db.orm.Application.where({ id }).first();
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (application.userId !== req.user!.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { roundName, scheduledDate, meetingLink, interviewer, feedbackNotes, status } = req.body;
+
+    const interview = await db.orm.Interview.create({
+      applicationId: id,
+      roundName: roundName.trim(),
+      scheduledDate: new Date(scheduledDate),
+      meetingLink: meetingLink ?? null,
+      interviewer: interviewer ?? null,
+      feedbackNotes: feedbackNotes ?? null,
+      status: status || 'Scheduled',
+    });
+
+    res.status(201).json(interview);
+  } catch (error) {
+    console.error('Create interview error:', error);
+    res.status(500).json({ error: 'Failed to create interview' });
+  }
+});
+
+// LIST interview rounds for an application
+router.get('/:id/interviews', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const application = await db.orm.Application.where({ id }).first();
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (application.userId !== req.user!.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const interviews = await db.orm.Interview
+      .where({ applicationId: id })
+      .orderBy((i: any) => i.scheduledDate.asc())
+      .all();
+
+    res.json(interviews);
+  } catch (error) {
+    console.error('List interviews error:', error);
+    res.status(500).json({ error: 'Failed to fetch interviews' });
   }
 });
 

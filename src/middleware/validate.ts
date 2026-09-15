@@ -133,3 +133,56 @@ export function validateUpdateProfile(req: Request, res: Response, next: NextFun
 
   next();
 }
+
+export const VALID_INTERVIEW_STATUSES = ['Scheduled', 'Completed', 'Cancelled'] as const;
+export type InterviewStatus = typeof VALID_INTERVIEW_STATUSES[number];
+
+/**
+ * Validates creating an interview round.
+ * Required: roundName, scheduledDate.
+ * Optional: meetingLink, interviewer, feedbackNotes.
+ */
+export function validateCreateInterview(req: Request, res: Response, next: NextFunction) {
+  const { roundName, scheduledDate } = req.body;
+
+  if (!roundName || typeof roundName !== 'string' || roundName.trim().length === 0) {
+    return res.status(400).json({ error: 'roundName is required and cannot be empty' });
+  }
+
+  if (!scheduledDate) {
+    return res.status(400).json({ error: 'scheduledDate is required' });
+  }
+
+  const date = new Date(scheduledDate);
+  if (isNaN(date.getTime())) {
+    return res.status(400).json({ error: 'scheduledDate must be a valid ISO 8601 date string' });
+  }
+
+  next();
+}
+
+/**
+ * Validates updating an interview (all fields are optional).
+ */
+export function validateUpdateInterview(req: Request, res: Response, next: NextFunction) {
+  const { roundName, scheduledDate, status } = req.body;
+
+  if (roundName !== undefined && (typeof roundName !== 'string' || roundName.trim().length === 0)) {
+    return res.status(400).json({ error: 'roundName cannot be empty' });
+  }
+
+  if (scheduledDate !== undefined) {
+    const date = new Date(scheduledDate);
+    if (isNaN(date.getTime())) {
+      return res.status(400).json({ error: 'scheduledDate must be a valid ISO 8601 date string' });
+    }
+  }
+
+  if (status !== undefined && !VALID_INTERVIEW_STATUSES.includes(status as InterviewStatus)) {
+    return res.status(400).json({
+      error: `Invalid status '${status}'. Must be one of: ${VALID_INTERVIEW_STATUSES.join(', ')}`,
+    });
+  }
+
+  next();
+}

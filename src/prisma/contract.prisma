@@ -6,25 +6,26 @@ model User {
   linkedinUrl  String?
   githubUrl    String?
   createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  updatedAt    DateTime        @default(now())
   applications Application[]
 }
 
 model Application {
-  id           Int             @id @default(autoincrement())
-  company      String
-  role         String
-  status       String          @default("Applied")
-  notes        String?
-  salaryMin    Int?
-  salaryMax    Int?
-  currency     String?         @default("USD")
-  jobLocation  String?
-  jobPostUrl   String?
-  appliedDate  DateTime        @default(now())
-  userId       Int
-  user         User            @relation(fields: [userId], references: [id])
+  id            Int             @id @default(autoincrement())
+  company       String
+  role          String
+  status        String          @default("Applied")
+  notes         String?
+  salaryMin     Int?
+  salaryMax     Int?
+  currency      String?         @default("USD")
+  jobLocation   String?
+  jobPostUrl    String?
+  appliedDate   DateTime        @default(now())
+  userId        Int
+  user          User            @relation(fields: [userId], references: [id])
   statusHistory StatusHistory[]
+  interviews    Interview[]
 }
 
 model StatusHistory {
@@ -35,4 +36,18 @@ model StatusHistory {
   toStatus      String
   notes         String?
   changedAt     DateTime    @default(now())
+}
+
+model Interview {
+  id            Int         @id @default(autoincrement())
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id])
+  roundName     String
+  scheduledDate DateTime
+  meetingLink   String?
+  interviewer   String?
+  feedbackNotes String?
+  status        String      @default("Scheduled")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now())
 }

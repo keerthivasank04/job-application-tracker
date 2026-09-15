@@ -8,6 +8,7 @@ import authRoutes from './routes/auth';
 import applicationsRoutes from './routes/applications';
 import adminRoutes from './routes/admin';
 import exportRoutes from './routes/export';
+import interviewRoutes from './routes/interviews';
 
 const app = express();
 
@@ -40,5 +41,6 @@ app.use('/auth', authRoutes);
 app.use('/applications', applicationsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/export', exportRoutes);
+app.use('/interviews', interviewRoutes);
 
 export default app;
