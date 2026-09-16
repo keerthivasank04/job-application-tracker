@@ -11,21 +11,25 @@ model User {
 }
 
 model Application {
-  id            Int             @id @default(autoincrement())
-  company       String
-  role          String
-  status        String          @default("Applied")
-  notes         String?
-  salaryMin     Int?
-  salaryMax     Int?
-  currency      String?         @default("USD")
-  jobLocation   String?
-  jobPostUrl    String?
-  appliedDate   DateTime        @default(now())
-  userId        Int
-  user          User            @relation(fields: [userId], references: [id])
-  statusHistory StatusHistory[]
-  interviews    Interview[]
+  id                 Int             @id @default(autoincrement())
+  company            String
+  role               String
+  status             String          @default("Applied")
+  notes              String?
+  salaryMin          Int?
+  salaryMax          Int?
+  currency           String?         @default("USD")
+  jobLocation        String?
+  jobPostUrl         String?
+  resumePath         String?
+  resumeOriginalName String?
+  resumeMimeType     String?
+  resumeUploadedAt   DateTime?
+  appliedDate        DateTime        @default(now())
+  userId             Int
+  user               User            @relation(fields: [userId], references: [id])
+  statusHistory      StatusHistory[]
+  interviews         Interview[]
 }
 
 model StatusHistory {

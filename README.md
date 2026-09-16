@@ -135,9 +135,13 @@ npm run dev
 | PATCH | `/auth/profile` | Yes | Update profile (`name`, `linkedinUrl`, `githubUrl`) |
 | GET | `/applications` | Yes | List applications (supports pagination, status, company query) |
 | POST | `/applications` | Yes | Create a new job application |
+| GET | `/applications/stats` | Yes | Get user analytics, status breakdown, and conversion rates |
 | GET | `/applications/:id` | Yes | Get application by ID |
 | PATCH | `/applications/:id` | Yes | Update application (auto-records status changes) |
 | DELETE | `/applications/:id` | Yes | Delete application |
+| POST | `/applications/:id/resume` | Yes | Upload resume file (.pdf, .doc, .docx max 5MB) |
+| GET | `/applications/:id/resume` | Yes | Download attached resume file |
+| DELETE | `/applications/:id/resume` | Yes | Remove attached resume file |
 | GET | `/applications/:id/history` | Yes | Get status transition audit timeline |
 | GET | `/applications/:id/interviews` | Yes | List scheduled interviews for an application |
 | POST | `/applications/:id/interviews` | Yes | Schedule an interview round for an application |
@@ -145,7 +149,7 @@ npm run dev
 | PATCH | `/interviews/:id` | Yes | Update interview details, notes, or status |
 | DELETE | `/interviews/:id` | Yes | Delete/cancel an interview |
 | GET | `/export/csv` | Yes | Stream all applications as RFC 4180 CSV |
-| GET | `/admin/stats` | Yes | Aggregated user metrics |
+| GET | `/admin/stats` | Yes | Aggregated system metrics |
 
 ## Query Parameters (GET /applications)
 

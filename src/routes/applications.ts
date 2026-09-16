@@ -1,6 +1,9 @@
+import fs from 'fs';
+import path from 'path';
 import express, { type Request, type Response } from 'express';
 import { db } from '../prisma/db';
 import { authMiddleware } from '../middleware/auth';
+import { uploadResume } from '../middleware/upload';
 import {
   validateCreateApplication,
   validateUpdateApplication,
@@ -76,6 +79,60 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('List applications error:', error);
     res.status(500).json({ error: 'Failed to fetch applications' });
+  }
+});
+
+// GET user application analytics and metrics
+router.get('/stats', async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const applications = await db.orm.Application.where({ userId }).all();
+
+    const totalApplications = applications.length;
+    const byStatus: Record<string, number> = {
+      Applied: 0,
+      Interviewing: 0,
+      Offered: 0,
+      Rejected: 0,
+      Accepted: 0,
+      Withdrawn: 0,
+    };
+
+    let totalSalarySum = 0;
+    let salaryCount = 0;
+
+    for (const app of applications) {
+      if (byStatus[app.status] !== undefined) {
+        byStatus[app.status]++;
+      }
+
+      if (app.salaryMax) {
+        totalSalarySum += app.salaryMax;
+        salaryCount++;
+      } else if (app.salaryMin) {
+        totalSalarySum += app.salaryMin;
+        salaryCount++;
+      }
+    }
+
+    const activeApplications = byStatus.Applied + byStatus.Interviewing;
+    const interviewCount = byStatus.Interviewing + byStatus.Offered + byStatus.Accepted;
+    const interviewRate = totalApplications > 0 ? Number(((interviewCount / totalApplications) * 100).toFixed(1)) : 0;
+    const offerCount = byStatus.Offered + byStatus.Accepted;
+    const offerRate = totalApplications > 0 ? Number(((offerCount / totalApplications) * 100).toFixed(1)) : 0;
+    const averageSalary = salaryCount > 0 ? Math.round(totalSalarySum / salaryCount) : null;
+
+    res.json({
+      totalApplications,
+      activeApplications,
+      interviewRate: `${interviewRate}%`,
+      offerRate: `${offerRate}%`,
+      averageSalary,
+      byStatus,
+    });
+  } catch (error) {
+    console.error('Get application stats error:', error);
+    res.status(500).json({ error: 'Failed to generate application statistics' });
   }
 });
 
@@ -197,6 +254,121 @@ router.get('/:id/interviews', async (req: Request, res: Response) => {
   }
 });
 
+// UPLOAD resume for an application
+router.post('/:id/resume', uploadResume.single('resume'), async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please attach a resume file (.pdf, .doc, .docx under 5MB)' });
+    }
+
+    const application = await db.orm.Application.where({ id }).first();
+    if (!application) {
+      // Clean up uploaded file if application not found
+      fs.unlinkSync(req.file.path);
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (application.userId !== req.user!.userId) {
+      fs.unlinkSync(req.file.path);
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // If an existing resume exists on disk, remove it
+    if (application.resumePath && fs.existsSync(application.resumePath)) {
+      try {
+        fs.unlinkSync(application.resumePath);
+      } catch (err) {
+        console.warn('Could not remove old resume file:', err);
+      }
+    }
+
+    const updated = await db.orm.Application.where({ id }).update({
+      resumePath: req.file.path,
+      resumeOriginalName: req.file.originalname,
+      resumeMimeType: req.file.mimetype,
+      resumeUploadedAt: new Date(),
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Upload resume error:', error);
+    res.status(500).json({ error: 'Failed to upload resume file' });
+  }
+});
+
+// DOWNLOAD resume for an application
+router.get('/:id/resume', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const application = await db.orm.Application.where({ id }).first();
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (application.userId !== req.user!.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (!application.resumePath || !fs.existsSync(application.resumePath)) {
+      return res.status(404).json({ error: 'No resume attached to this application' });
+    }
+
+    const filename = application.resumeOriginalName || path.basename(application.resumePath);
+    res.download(path.resolve(application.resumePath), filename);
+  } catch (error) {
+    console.error('Download resume error:', error);
+    res.status(500).json({ error: 'Failed to download resume file' });
+  }
+});
+
+// DELETE resume for an application
+router.delete('/:id/resume', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const application = await db.orm.Application.where({ id }).first();
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    if (application.userId !== req.user!.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (application.resumePath && fs.existsSync(application.resumePath)) {
+      try {
+        fs.unlinkSync(application.resumePath);
+      } catch (err) {
+        console.warn('Could not remove resume file:', err);
+      }
+    }
+
+    const updated = await db.orm.Application.where({ id }).update({
+      resumePath: null,
+      resumeOriginalName: null,
+      resumeMimeType: null,
+      resumeUploadedAt: null,
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Delete resume error:', error);
+    res.status(500).json({ error: 'Failed to delete resume file' });
+  }
+});
+
 // UPDATE application — auto-logs StatusHistory when status changes
 router.patch('/:id', validateUpdateApplication, async (req: Request, res: Response) => {
   try {
@@ -261,6 +433,15 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
     if (application.userId !== req.user!.userId) {
       return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Clean up resume from disk if present
+    if (application.resumePath && fs.existsSync(application.resumePath)) {
+      try {
+        fs.unlinkSync(application.resumePath);
+      } catch (err) {
+        console.warn('Could not remove resume file on application delete:', err);
+      }
     }
 
     await db.orm.Application.where({ id }).delete();

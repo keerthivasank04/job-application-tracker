@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 .env
 .env.local
@@ -17,3 +17,5 @@ npm-debug.log*
 .turbo/
 .agents/
 scratch/
+uploads/
+ARCHITECTURE_AND_CODE_GUIDE.md

@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'8ff7a2ba46325268eb3b443204307e9c86fb80cb7ac2d2385b7476ace4280865'>;
+  StorageHashBase<'aaebdbfed1c5a7d919d8c86dd06d2b155279d911c187106018b199c293f8fd88'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -251,6 +251,10 @@ export type FieldOutputTypes = {
       readonly currency: CodecTypes['pg/text@1']['output'] | null;
       readonly jobLocation: CodecTypes['pg/text@1']['output'] | null;
       readonly jobPostUrl: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumePath: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumeOriginalName: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumeMimeType: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumeUploadedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly appliedDate: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly userId: CodecTypes['pg/int4@1']['output'];
     };
@@ -299,6 +303,10 @@ export type FieldInputTypes = {
       readonly currency: CodecTypes['pg/text@1']['input'] | null;
       readonly jobLocation: CodecTypes['pg/text@1']['input'] | null;
       readonly jobPostUrl: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumePath: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumeOriginalName: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumeMimeType: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumeUploadedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly appliedDate: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly userId: CodecTypes['pg/int4@1']['input'];
     };
@@ -344,6 +352,10 @@ export type StorageColumnTypes = {
       readonly jobLocation: CodecTypes['pg/text@1']['output'] | null;
       readonly jobPostUrl: CodecTypes['pg/text@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumeMimeType: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumeOriginalName: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumePath: CodecTypes['pg/text@1']['output'] | null;
+      readonly resumeUploadedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly role: CodecTypes['pg/text@1']['output'];
       readonly salaryMax: CodecTypes['pg/int4@1']['output'] | null;
       readonly salaryMin: CodecTypes['pg/int4@1']['output'] | null;
@@ -392,6 +404,10 @@ export type StorageColumnInputTypes = {
       readonly jobLocation: CodecTypes['pg/text@1']['input'] | null;
       readonly jobPostUrl: CodecTypes['pg/text@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumeMimeType: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumeOriginalName: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumePath: CodecTypes['pg/text@1']['input'] | null;
+      readonly resumeUploadedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly role: CodecTypes['pg/text@1']['input'];
       readonly salaryMax: CodecTypes['pg/int4@1']['input'] | null;
       readonly salaryMin: CodecTypes['pg/int4@1']['input'] | null;
@@ -510,6 +526,26 @@ type ContractBase = Omit<
                 readonly jobPostUrl: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly resumePath: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly resumeOriginalName: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly resumeMimeType: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly resumeUploadedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
                   readonly nullable: true;
                 };
                 readonly appliedDate: {
@@ -822,6 +858,25 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly resumePath: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly resumeOriginalName: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly resumeMimeType: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly resumeUploadedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
               readonly appliedDate: {
                 readonly nullable: false;
                 readonly type: {
@@ -880,6 +935,10 @@ type ContractBase = Omit<
                 readonly currency: { readonly column: 'currency' };
                 readonly jobLocation: { readonly column: 'jobLocation' };
                 readonly jobPostUrl: { readonly column: 'jobPostUrl' };
+                readonly resumePath: { readonly column: 'resumePath' };
+                readonly resumeOriginalName: { readonly column: 'resumeOriginalName' };
+                readonly resumeMimeType: { readonly column: 'resumeMimeType' };
+                readonly resumeUploadedAt: { readonly column: 'resumeUploadedAt' };
                 readonly appliedDate: { readonly column: 'appliedDate' };
                 readonly userId: { readonly column: 'userId' };
               };

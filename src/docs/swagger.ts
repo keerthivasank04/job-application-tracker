@@ -84,7 +84,31 @@ export const swaggerSpec = {
           jobLocation: { type: 'string', nullable: true, example: 'Remote' },
           jobPostUrl: { type: 'string', nullable: true, example: 'https://careers.google.com/jobs/123' },
           appliedDate: { type: 'string', format: 'date-time', example: '2026-09-01T10:30:00.000Z' },
+          resumeOriginalName: { type: 'string', nullable: true, example: 'john_doe_resume.pdf' },
+          resumeMimeType: { type: 'string', nullable: true, example: 'application/pdf' },
+          resumeUploadedAt: { type: 'string', format: 'date-time', nullable: true, example: '2026-09-02T10:00:00.000Z' },
           userId: { type: 'integer', example: 1 },
+        },
+      },
+      ApplicationStats: {
+        type: 'object',
+        properties: {
+          totalApplications: { type: 'integer', example: 12 },
+          activeApplications: { type: 'integer', example: 5 },
+          interviewRate: { type: 'string', example: '41.7%' },
+          offerRate: { type: 'string', example: '16.7%' },
+          averageSalary: { type: 'integer', nullable: true, example: 135000 },
+          byStatus: {
+            type: 'object',
+            properties: {
+              Applied: { type: 'integer', example: 3 },
+              Interviewing: { type: 'integer', example: 2 },
+              Offered: { type: 'integer', example: 1 },
+              Rejected: { type: 'integer', example: 4 },
+              Accepted: { type: 'integer', example: 1 },
+              Withdrawn: { type: 'integer', example: 1 },
+            },
+          },
         },
       },
       CreateApplicationRequest: {
@@ -382,6 +406,25 @@ export const swaggerSpec = {
         },
       },
     },
+    '/applications/stats': {
+      get: {
+        summary: 'Get user application analytics and metrics',
+        description: 'Returns aggregated statistics, breakdown by status, active application count, and interview/offer conversion rates.',
+        tags: ['Applications'],
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'Application analytics and metrics',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApplicationStats' },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
     '/applications/{id}': {
       get: {
         summary: 'Get application by ID',
@@ -450,6 +493,73 @@ export const swaggerSpec = {
                 },
               },
             },
+          },
+          403: { description: 'Forbidden' },
+          404: { description: 'Application not found' },
+        },
+      },
+    },
+    '/applications/{id}/resume': {
+      post: {
+        summary: 'Upload resume file for application',
+        description: 'Uploads a PDF, DOC, or DOCX resume document (max 5MB) attached to the specified application.',
+        tags: ['Applications'],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  resume: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Resume document (.pdf, .doc, .docx)',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Resume uploaded successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Application' } } },
+          },
+          400: { description: 'Invalid file format or missing file' },
+          403: { description: 'Forbidden' },
+          404: { description: 'Application not found' },
+        },
+      },
+      get: {
+        summary: 'Download resume file for application',
+        tags: ['Applications'],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: {
+            description: 'Resume file download',
+            content: {
+              'application/octet-stream': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          403: { description: 'Forbidden' },
+          404: { description: 'No resume attached or application not found' },
+        },
+      },
+      delete: {
+        summary: 'Delete resume attachment from application',
+        tags: ['Applications'],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: {
+          200: {
+            description: 'Resume removed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Application' } } },
           },
           403: { description: 'Forbidden' },
           404: { description: 'Application not found' },

@@ -76,6 +76,34 @@
                   "kind": "scalar"
                 }
               },
+              "resumeMimeType": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resumeOriginalName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resumePath": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resumeUploadedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
               "role": {
                 "nullable": false,
                 "type": {
@@ -181,6 +209,18 @@
                 },
                 "notes": {
                   "column": "notes"
+                },
+                "resumeMimeType": {
+                  "column": "resumeMimeType"
+                },
+                "resumeOriginalName": {
+                  "column": "resumeOriginalName"
+                },
+                "resumePath": {
+                  "column": "resumePath"
+                },
+                "resumeUploadedAt": {
+                  "column": "resumeUploadedAt"
                 },
                 "role": {
                   "column": "role"
@@ -581,6 +621,26 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "resumeMimeType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "resumeOriginalName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "resumePath": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "resumeUploadedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "role": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -902,7 +962,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8ff7a2ba46325268eb3b443204307e9c86fb80cb7ac2d2385b7476ace4280865"
+    "storageHash": "aaebdbfed1c5a7d919d8c86dd06d2b155279d911c187106018b199c293f8fd88"
   },
   "capabilities": {
     "postgres": {
