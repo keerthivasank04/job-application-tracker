@@ -173,6 +173,7 @@
               },
               "user": {
                 "cardinality": "N:1",
+                "nullable": false,
                 "on": {
                   "localFields": [
                     "userId"
@@ -318,6 +319,7 @@
             "relations": {
               "application": {
                 "cardinality": "N:1",
+                "nullable": false,
                 "on": {
                   "localFields": [
                     "applicationId"
@@ -417,6 +419,7 @@
             "relations": {
               "application": {
                 "cardinality": "N:1",
+                "nullable": false,
                 "on": {
                   "localFields": [
                     "applicationId"

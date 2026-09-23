@@ -11,9 +11,19 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        tsconfig: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          target: 'ES2022',
+          resolveJsonModule: true,
+          esModuleInterop: true,
+        },
       },
     ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@prisma)/)',
+  ],
   testMatch: ['**/tests/**/*.test.ts'],
   testTimeout: 10000,
 };

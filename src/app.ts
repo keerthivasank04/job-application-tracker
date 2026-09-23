@@ -3,6 +3,8 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { generalLimiter } from './middleware/rate-limiter';
+import { notFoundHandler } from './middleware/not-found';
+import { errorHandler } from './middleware/error-handler';
 import { setupSwagger } from './docs/swagger';
 import authRoutes from './routes/auth';
 import applicationsRoutes from './routes/applications';
@@ -42,5 +44,11 @@ app.use('/applications', applicationsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/export', exportRoutes);
 app.use('/interviews', interviewRoutes);
+
+// Catch-all 404 for undefined routes
+app.use(notFoundHandler);
+
+// Centralized error handler
+app.use(errorHandler);
 
 export default app;
