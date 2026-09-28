@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -15,8 +16,12 @@ import interviewRoutes from './routes/interviews';
 
 const app = express();
 
-// Security HTTP headers
-app.use(helmet());
+// Security HTTP headers (CSP disabled so the embedded SPA can load Tailwind CDN and fonts)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
 // Cross-Origin Resource Sharing
 app.use(cors({
@@ -28,11 +33,14 @@ app.use(cors({
 // Body parsing
 app.use(express.json({ limit: '100kb' }));
 
+// Serve frontend static dashboard files from public/ directory
+app.use(express.static(path.resolve('public')));
+
 // Request performance logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   res.on('finish', () => {
-    if (req.originalUrl !== '/health') {
+    if (req.originalUrl !== '/health' && !req.originalUrl.startsWith('/api-docs')) {
       const duration = Date.now() - start;
       console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
     }
@@ -68,6 +76,11 @@ app.get('/health', async (_req: Request, res: Response) => {
 
   const statusCode = dbStatus === 'connected' ? 200 : 503;
   res.status(statusCode).json(payload);
+});
+
+// Root route: Serve frontend application
+app.get('/', (_req: Request, res: Response) => {
+  res.sendFile(path.resolve('public', 'index.html'));
 });
 
 // Mount Application Routes

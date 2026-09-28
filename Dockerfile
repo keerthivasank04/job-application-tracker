@@ -33,6 +33,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/prisma ./src/prisma
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
