@@ -1,13 +1,15 @@
 model User {
-  id           Int             @id @default(autoincrement())
-  email        String          @unique
-  passwordHash String
-  name         String?
-  linkedinUrl  String?
-  githubUrl    String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @default(now())
-  applications Application[]
+  id                   Int             @id @default(autoincrement())
+  email                String          @unique
+  passwordHash         String
+  name                 String?
+  linkedinUrl          String?
+  githubUrl            String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @default(now())
+  applications         Application[]
 }
 
 model Application {

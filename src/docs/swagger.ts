@@ -46,6 +46,35 @@ export const swaggerSpec = {
           token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
         },
       },
+      ChangePasswordRequest: {
+        type: 'object',
+        required: ['currentPassword', 'newPassword'],
+        properties: {
+          currentPassword: { type: 'string', example: 'OldPassword123' },
+          newPassword: { type: 'string', minLength: 8, example: 'NewSecurePassword456' },
+        },
+      },
+      ForgotPasswordRequest: {
+        type: 'object',
+        required: ['email'],
+        properties: {
+          email: { type: 'string', format: 'email', example: 'user@example.com' },
+        },
+      },
+      ResetPasswordRequest: {
+        type: 'object',
+        required: ['token', 'newPassword'],
+        properties: {
+          token: { type: 'string', example: 'a1b2c3d4e5f6...' },
+          newPassword: { type: 'string', minLength: 8, example: 'NewSecurePassword456' },
+        },
+      },
+      MessageResponse: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Operation completed successfully' },
+        },
+      },
       UserProfile: {
         type: 'object',
         properties: {
@@ -353,6 +382,77 @@ export const swaggerSpec = {
           },
           400: { description: 'Validation error' },
           401: { description: 'Unauthorized' },
+        },
+      },
+      delete: {
+        summary: 'Delete user account and all associated applications and data',
+        tags: ['Auth'],
+        security: [{ bearerAuth: [] }],
+        responses: {
+          204: { description: 'Account deleted successfully' },
+          401: { description: 'Unauthorized' },
+          404: { description: 'User not found' },
+        },
+      },
+    },
+    '/auth/change-password': {
+      post: {
+        summary: 'Change account password',
+        tags: ['Auth'],
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/ChangePasswordRequest' } },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Password changed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/MessageResponse' } } },
+          },
+          400: { description: 'Incorrect current password or invalid new password' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/auth/forgot-password': {
+      post: {
+        summary: 'Request a password reset link/token',
+        tags: ['Auth'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/ForgotPasswordRequest' } },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Reset request received',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/MessageResponse' } } },
+          },
+          400: { description: 'Valid email required' },
+          429: { description: 'Too many requests (rate limited)' },
+        },
+      },
+    },
+    '/auth/reset-password': {
+      post: {
+        summary: 'Reset password using valid reset token',
+        tags: ['Auth'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/ResetPasswordRequest' } },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Password reset successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/MessageResponse' } } },
+          },
+          400: { description: 'Invalid or expired token or weak password' },
+          429: { description: 'Too many requests (rate limited)' },
         },
       },
     },

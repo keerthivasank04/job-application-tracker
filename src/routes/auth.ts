@@ -1,3 +1,5 @@
+import fs from 'fs';
+import crypto from 'crypto';
 import express, { type Request, type Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -5,9 +7,11 @@ import { db } from '../prisma/db';
 import { validateSignup, validateLogin, validateUpdateProfile } from '../middleware/validate';
 import { authLimiter } from '../middleware/rate-limiter';
 import { authMiddleware as authenticate } from '../middleware/auth';
+import { EmailService } from '../services/email';
 
 const router = express.Router();
 
+// REGISTER
 router.post('/signup', validateSignup, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -30,6 +34,7 @@ router.post('/signup', validateSignup, async (req: Request, res: Response) => {
   }
 });
 
+// LOGIN
 router.post('/login', authLimiter, validateLogin, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -57,10 +62,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
   }
 });
 
-/**
- * GET /auth/profile
- * Returns the authenticated user's profile fields (excludes passwordHash).
- */
+// GET PROFILE
 router.get('/profile', authenticate, async (req: Request, res: Response) => {
   try {
     const user = await db.orm.User.where({ id: req.user!.userId }).first();
@@ -68,7 +70,7 @@ router.get('/profile', authenticate, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const { passwordHash: _, ...profile } = user as any;
+    const { passwordHash: _, resetPasswordToken: __, resetPasswordExpires: ___, ...profile } = user as any;
     res.json(profile);
   } catch (error) {
     console.error('Get profile error:', error);
@@ -76,10 +78,7 @@ router.get('/profile', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * PATCH /auth/profile
- * Updates the authenticated user's profile (name, linkedinUrl, githubUrl).
- */
+// UPDATE PROFILE
 router.patch('/profile', authenticate, validateUpdateProfile, async (req: Request, res: Response) => {
   try {
     const { name, linkedinUrl, githubUrl } = req.body;
@@ -94,10 +93,162 @@ router.patch('/profile', authenticate, validateUpdateProfile, async (req: Reques
     }
 
     const updated = await db.orm.User.where({ id: req.user!.userId }).update(updates);
-    const { passwordHash: _, ...profile } = updated as any;
+    const { passwordHash: _, resetPasswordToken: __, resetPasswordExpires: ___, ...profile } = updated as any;
     res.json(profile);
   } catch (error) {
     console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// CHANGE PASSWORD (AUTHENTICATED)
+router.post('/change-password', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Both currentPassword and newPassword are required' });
+    }
+
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ error: 'newPassword must be at least 8 characters long' });
+    }
+
+    const user = await db.orm.User.where({ id: req.user!.userId }).first();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) {
+      return res.status(400).json({ error: 'Current password does not match' });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await db.orm.User.where({ id: req.user!.userId }).update({
+      passwordHash: newPasswordHash,
+    });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// FORGOT PASSWORD
+router.post('/forgot-password', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    const user = await db.orm.User.where({ email: email.toLowerCase().trim() }).first();
+
+    if (user) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+
+      await db.orm.User.where({ id: user.id }).update({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: expires,
+      });
+
+      await EmailService.sendPasswordReset({
+        toEmail: user.email,
+        candidateName: user.name ?? undefined,
+        resetToken: rawToken,
+      });
+    }
+
+    // Always respond with success to prevent user enumeration
+    res.json({ message: 'If an account exists with this email, a password reset link has been dispatched.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// RESET PASSWORD
+router.post('/reset-password', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'Reset token is required' });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ error: 'newPassword must be at least 8 characters long' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await db.orm.User.where({ resetPasswordToken: hashedToken }).first();
+
+    if (!user || !user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      return res.status(400).json({ error: 'Invalid or expired password reset token' });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await db.orm.User.where({ id: user.id }).update({
+      passwordHash: newPasswordHash,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    });
+
+    res.json({ message: 'Password has been successfully reset. You may now log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE ACCOUNT (CASCADING DELETION)
+router.delete('/profile', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const user = await db.orm.User.where({ id: userId }).first();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Fetch user applications
+    const applications = await db.orm.Application.where({ userId }).all();
+
+    for (const app of applications) {
+      // Delete interviews
+      const interviews = await db.orm.Interview.where({ applicationId: app.id }).all();
+      for (const interview of interviews) {
+        await db.orm.Interview.where({ id: interview.id }).delete();
+      }
+
+      // Delete status history
+      const history = await db.orm.StatusHistory.where({ applicationId: app.id }).all();
+      for (const item of history) {
+        await db.orm.StatusHistory.where({ id: item.id }).delete();
+      }
+
+      // Clean up resume file from disk
+      if (app.resumePath && fs.existsSync(app.resumePath)) {
+        try {
+          fs.unlinkSync(app.resumePath);
+        } catch (err) {
+          console.warn('Could not remove resume file:', err);
+        }
+      }
+
+      // Delete application
+      await db.orm.Application.where({ id: app.id }).delete();
+    }
+
+    // Delete user
+    await db.orm.User.where({ id: userId }).delete();
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Delete account error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

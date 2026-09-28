@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'aaebdbfed1c5a7d919d8c86dd06d2b155279d911c187106018b199c293f8fd88'>;
+  StorageHashBase<'1ef32ef7fd5c11359409fa2b6ebc87b00c2e85aeb35d0515b110566a5636345b'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -286,6 +286,8 @@ export type FieldOutputTypes = {
       readonly name: CodecTypes['pg/text@1']['output'] | null;
       readonly linkedinUrl: CodecTypes['pg/text@1']['output'] | null;
       readonly githubUrl: CodecTypes['pg/text@1']['output'] | null;
+      readonly resetPasswordToken: CodecTypes['pg/text@1']['output'] | null;
+      readonly resetPasswordExpires: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -338,6 +340,8 @@ export type FieldInputTypes = {
       readonly name: CodecTypes['pg/text@1']['input'] | null;
       readonly linkedinUrl: CodecTypes['pg/text@1']['input'] | null;
       readonly githubUrl: CodecTypes['pg/text@1']['input'] | null;
+      readonly resetPasswordToken: CodecTypes['pg/text@1']['input'] | null;
+      readonly resetPasswordExpires: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -391,6 +395,8 @@ export type StorageColumnTypes = {
       readonly linkedinUrl: CodecTypes['pg/text@1']['output'] | null;
       readonly name: CodecTypes['pg/text@1']['output'] | null;
       readonly passwordHash: CodecTypes['pg/text@1']['output'];
+      readonly resetPasswordExpires: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+      readonly resetPasswordToken: CodecTypes['pg/text@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
   };
@@ -443,6 +449,8 @@ export type StorageColumnInputTypes = {
       readonly linkedinUrl: CodecTypes['pg/text@1']['input'] | null;
       readonly name: CodecTypes['pg/text@1']['input'] | null;
       readonly passwordHash: CodecTypes['pg/text@1']['input'];
+      readonly resetPasswordExpires: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
+      readonly resetPasswordToken: CodecTypes['pg/text@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
   };
@@ -771,6 +779,16 @@ type ContractBase = Omit<
                 readonly githubUrl: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly resetPasswordToken: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly resetPasswordExpires: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
                   readonly nullable: true;
                 };
                 readonly createdAt: {
@@ -1109,6 +1127,17 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly resetPasswordToken: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly resetPasswordExpires: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1147,6 +1176,8 @@ type ContractBase = Omit<
                 readonly name: { readonly column: 'name' };
                 readonly linkedinUrl: { readonly column: 'linkedinUrl' };
                 readonly githubUrl: { readonly column: 'githubUrl' };
+                readonly resetPasswordToken: { readonly column: 'resetPasswordToken' };
+                readonly resetPasswordExpires: { readonly column: 'resetPasswordExpires' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };

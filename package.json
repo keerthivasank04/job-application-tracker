@@ -11,7 +11,8 @@
     "test": "node --loader ts-node/esm --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:watch": "node --loader ts-node/esm --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch",
     "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "seed": "node --import tsx src/scripts/seed.ts"
   },
   "keywords": [],
   "author": "",

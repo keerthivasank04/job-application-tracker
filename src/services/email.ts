@@ -1,7 +1,8 @@
 /**
  * Email Notification Service
  *
- * Provides transactional notifications for interview reminders and application status updates.
+ * Provides transactional notifications for interview reminders, application status updates,
+ * and secure password reset operations.
  * In development or when SMTP credentials are not configured, notifications are logged securely.
  */
 
@@ -24,6 +25,12 @@ export interface StatusUpdatePayload {
   toStatus: string;
 }
 
+export interface PasswordResetPayload {
+  toEmail: string;
+  candidateName?: string;
+  resetToken: string;
+}
+
 export class EmailService {
   /**
    * Sends an interview round reminder notification.
@@ -35,20 +42,6 @@ export class EmailService {
     }).format(new Date(payload.scheduledDate));
 
     const subject = `Reminder: Upcoming Interview with ${payload.company} (${payload.roundName})`;
-    const content = `
-Hello ${payload.candidateName || 'Candidate'},
-
-This is a reminder for your upcoming interview round:
-- Company: ${payload.company}
-- Role: ${payload.role}
-- Round: ${payload.roundName}
-- Date & Time: ${formattedDate}
-${payload.meetingLink ? `- Meeting Link: ${payload.meetingLink}` : ''}
-
-Best of luck with your preparation!
-    `.trim();
-
-    // If SMTP is not configured, record delivery in logs
     console.info(`[EmailService] Simulated delivery to ${payload.toEmail} | Subject: "${subject}"`);
     return true;
   }
@@ -58,15 +51,18 @@ Best of luck with your preparation!
    */
   static async sendStatusUpdate(payload: StatusUpdatePayload): Promise<boolean> {
     const subject = `Application Status Update: ${payload.company} - ${payload.role}`;
-    const content = `
-Hello ${payload.candidateName || 'Candidate'},
-
-The status for your application at ${payload.company} (${payload.role}) has been updated:
-- Previous Status: ${payload.fromStatus}
-- Current Status: ${payload.toStatus}
-    `.trim();
-
     console.info(`[EmailService] Simulated delivery to ${payload.toEmail} | Subject: "${subject}"`);
+    return true;
+  }
+
+  /**
+   * Sends a password reset token to the user.
+   */
+  static async sendPasswordReset(payload: PasswordResetPayload): Promise<boolean> {
+    const subject = 'Password Reset Request - Job Application Tracker';
+    console.info(
+      `[EmailService] Simulated password reset token delivery to ${payload.toEmail} | Token: ${payload.resetToken}`
+    );
     return true;
   }
 }

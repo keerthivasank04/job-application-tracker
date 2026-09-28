@@ -510,6 +510,20 @@
                   "kind": "scalar"
                 }
               },
+              "resetPasswordExpires": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "resetPasswordToken": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -557,6 +571,12 @@
                 },
                 "passwordHash": {
                   "column": "passwordHash"
+                },
+                "resetPasswordExpires": {
+                  "column": "resetPasswordExpires"
+                },
+                "resetPasswordToken": {
+                  "column": "resetPasswordToken"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -934,6 +954,16 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "resetPasswordExpires": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "resetPasswordToken": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "default": {
@@ -965,7 +995,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "aaebdbfed1c5a7d919d8c86dd06d2b155279d911c187106018b199c293f8fd88"
+    "storageHash": "1ef32ef7fd5c11359409fa2b6ebc87b00c2e85aeb35d0515b110566a5636345b"
   },
   "capabilities": {
     "postgres": {

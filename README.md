@@ -133,6 +133,10 @@ npm run dev
 | POST | `/auth/login` | No (Rate limited) | Authenticate and obtain JWT token |
 | GET | `/auth/profile` | Yes | Get authenticated user profile |
 | PATCH | `/auth/profile` | Yes | Update profile (`name`, `linkedinUrl`, `githubUrl`) |
+| DELETE | `/auth/profile` | Yes | Delete user account and cascade delete all applications |
+| POST | `/auth/change-password` | Yes | Change account password with current password verification |
+| POST | `/auth/forgot-password` | No (Rate limited) | Request secure 1-hour password reset link/token |
+| POST | `/auth/reset-password` | No (Rate limited) | Reset account password using valid token |
 | GET | `/applications` | Yes | List applications (supports pagination, status, company query) |
 | POST | `/applications` | Yes | Create a new job application |
 | GET | `/applications/stats` | Yes | Get user analytics, status breakdown, and conversion rates |
