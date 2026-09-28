@@ -1,241 +1,330 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-900">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Application Tracker</title>
+  <title>Job Application Tracker — Enterprise Career Pipeline</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 9999px; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="h-full bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white antialiased">
 
-  <!-- Navigation Bar -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <!-- Unauthenticated Screen -->
+  <div id="authScreen" class="min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+    <div class="w-full max-w-md">
+      <!-- App Brand Header -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-lg shadow-indigo-500/20 mb-3 border border-indigo-400/30">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-white">Career Intelligence</h1>
+        <p class="text-xs text-slate-400 mt-1">High-performance application pipeline & candidate tracker</p>
+      </div>
+
+      <!-- Auth Card -->
+      <div class="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-7 shadow-2xl shadow-black/80">
+        <!-- Tab Selector -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-slate-950/60 rounded-xl mb-6 border border-slate-800/80 text-xs font-semibold">
+          <button id="authTabLogin" onclick="switchAuthMode('login')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition">Sign In</button>
+          <button id="authTabSignup" onclick="switchAuthMode('signup')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition">Create Account</button>
+        </div>
+
+        <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Work Email</label>
+            <input type="email" id="authEmail" required class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-slate-600 transition" placeholder="alex@company.dev">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Password</label>
+              <button type="button" onclick="triggerPasswordResetModal()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium">Forgot?</button>
+            </div>
+            <input type="password" id="authPassword" required minlength="8" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-slate-600 transition" placeholder="Minimum 8 characters">
+          </div>
+
+          <div id="authAlert" class="text-xs text-rose-400 font-medium hidden p-3 rounded-lg bg-rose-500/10 border border-rose-500/20"></div>
+
+          <button type="submit" id="authSubmitBtn" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition transform active:scale-[0.99]">
+            Sign In to Workspace
+          </button>
+        </form>
+
+        <div class="mt-6 pt-5 border-t border-slate-800/80 text-center">
+          <button type="button" onclick="autofillDemoCredentials()" class="text-xs text-slate-400 hover:text-indigo-400 font-medium flex items-center justify-center mx-auto transition">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Autofill Demo Credentials (demo@jobtracker.dev)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authenticated Application Shell -->
+  <div id="appShell" class="min-h-screen flex flex-col hidden bg-slate-950">
+
+    <!-- Top Global Header -->
+    <header class="h-16 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-6">
+      <div class="flex items-center space-x-6">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20">
+            JT
+          </div>
+          <div>
+            <span class="font-bold text-sm tracking-tight text-white">Job Tracker</span>
+            <span class="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">v1.0 Pro</span>
+          </div>
+        </div>
+
+        <!-- Breadcrumb / Section -->
+        <div class="hidden md:flex items-center text-xs text-slate-400 space-x-2 pl-4 border-l border-slate-800">
+          <span>Workspace</span>
+          <span>/</span>
+          <span class="text-slate-200 font-semibold">Active Recruitment Pipeline</span>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-          JT
+        <!-- Health status indicator -->
+        <div id="systemHealthBadge" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Engine Online</span>
         </div>
-        <div>
-          <span class="text-lg font-semibold tracking-tight text-slate-900">Job Tracker</span>
-          <span class="text-xs ml-2 px-2 py-0.5 bg-indigo-50 text-indigo-700 font-medium rounded border border-indigo-200">API v1.0</span>
-        </div>
-      </div>
-      <div class="flex items-center space-x-4">
-        <a href="/api-docs/" target="_blank" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition flex items-center">
-          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          API Docs
+
+        <a href="/api-docs/" target="_blank" class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 transition flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+          API Spec
         </a>
-        <div id="authNavContainer" class="flex items-center space-x-3"></div>
-      </div>
-    </div>
-  </header>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-    <!-- Auth View (Shown when logged out) -->
-    <div id="authView" class="max-w-md mx-auto my-12 bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-slate-900 tracking-tight" id="authTitle">Sign In</h2>
-        <p class="text-sm text-slate-500 mt-1">Manage and track your job applications professionally.</p>
-      </div>
-
-      <!-- Tab Buttons -->
-      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg mb-6 text-sm font-medium">
-        <button id="tabLogin" onclick="switchAuthTab('login')" class="py-2 rounded-md bg-white shadow-sm text-slate-900 font-semibold transition">Login</button>
-        <button id="tabSignup" onclick="switchAuthTab('signup')" class="py-2 rounded-md text-slate-600 hover:text-slate-900 transition">Register</button>
-      </div>
-
-      <!-- Auth Form -->
-      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Email Address</label>
-          <input type="email" id="authEmail" required class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="engineer@example.com">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Password</label>
-          <input type="password" id="authPassword" required minlength="8" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Minimum 8 characters">
-        </div>
-        <div id="authError" class="text-xs text-rose-600 hidden font-medium"></div>
-        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm shadow-sm transition">
-          Sign In
-        </button>
-      </form>
-
-      <!-- Quick Fill Credentials -->
-      <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-        <button type="button" onclick="fillDemoCredentials()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-          Autofill Demo Credentials (demo@jobtracker.dev)
-        </button>
-      </div>
-    </div>
-
-    <!-- Dashboard View (Shown when logged in) -->
-    <div id="dashboardView" class="hidden space-y-6">
-
-      <!-- Metrics Row -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Applications</p>
-            <p id="statTotal" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        <!-- User profile badge & logout -->
+        <div class="flex items-center space-x-2 pl-2 border-l border-slate-800">
+          <div id="userAvatar" class="w-8 h-8 rounded-lg bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 font-bold text-xs flex items-center justify-center">
+            US
           </div>
-          <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          <div class="hidden lg:block text-left">
+            <p id="userNameDisplay" class="text-xs font-semibold text-white leading-tight">Candidate</p>
+            <p id="userEmailDisplay" class="text-[10px] text-slate-400 leading-tight">user@example.com</p>
           </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Active In Pipeline</p>
-            <p id="statActive" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-          </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Interview Rate</p>
-            <p id="statInterviewRate" class="text-2xl font-bold text-amber-600 mt-1">0%</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Offer Rate</p>
-            <p id="statOfferRate" class="text-2xl font-bold text-emerald-600 mt-1">0%</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          </div>
+          <button onclick="logout()" title="Sign Out" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          </button>
         </div>
       </div>
+    </header>
 
-      <!-- Action Toolbar -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center space-x-3 w-full sm:w-auto">
-          <div class="relative w-full sm:w-64">
-            <input type="text" id="searchInput" oninput="filterApplications()" placeholder="Filter by company or role..." class="w-full pl-9 pr-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <!-- Main Workspace View -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-6 py-6 space-y-6">
+
+      <!-- Metric KPI Strip -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card: Total Pipeline -->
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider text-[11px]">Total Tracked</span>
+            <div class="p-1 rounded bg-slate-800 text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            </div>
           </div>
-          <select id="statusFilter" onchange="filterApplications()" class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-            <option value="ALL">All Statuses</option>
+          <div class="flex items-baseline space-x-2">
+            <span id="metricTotal" class="text-2xl font-extrabold text-white">0</span>
+            <span class="text-xs text-slate-500 font-medium">applications</span>
+          </div>
+        </div>
+
+        <!-- Card: In Active Rounds -->
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider text-[11px]">Active Candidates</span>
+            <div class="p-1 rounded bg-indigo-500/10 text-indigo-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span id="metricActive" class="text-2xl font-extrabold text-indigo-400">0</span>
+            <span class="text-xs text-slate-500 font-medium">in active stages</span>
+          </div>
+        </div>
+
+        <!-- Card: Interview Conversion -->
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider text-[11px]">Interview Conversion</span>
+            <div class="p-1 rounded bg-amber-500/10 text-amber-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span id="metricInterviewRate" class="text-2xl font-extrabold text-amber-400">0%</span>
+            <span class="text-xs text-slate-500 font-medium">lead to rounds</span>
+          </div>
+        </div>
+
+        <!-- Card: Offer Rate -->
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider text-[11px]">Offer Conversion</span>
+            <div class="p-1 rounded bg-emerald-500/10 text-emerald-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span id="metricOfferRate" class="text-2xl font-extrabold text-emerald-400">0%</span>
+            <span class="text-xs text-slate-500 font-medium">closed offers</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Control Toolbar -->
+      <section class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-1 items-center space-x-3">
+          <!-- Search box -->
+          <div class="relative flex-1 max-w-md">
+            <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="Filter by company, position, or location..." class="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+
+          <!-- Status Dropdown -->
+          <select id="filterStatus" onchange="applyFilters()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">All Stages</option>
             <option value="Applied">Applied</option>
             <option value="Interviewing">Interviewing</option>
             <option value="Offered">Offered</option>
-            <option value="Rejected">Rejected</option>
             <option value="Accepted">Accepted</option>
+            <option value="Rejected">Rejected</option>
             <option value="Withdrawn">Withdrawn</option>
           </select>
         </div>
 
-        <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
-          <button onclick="downloadCsvExport()" class="px-3.5 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-2.5">
+          <button onclick="downloadCsv()" class="px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700/60 transition flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             Export CSV
           </button>
-          <button onclick="openCreateApplicationModal()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition flex items-center">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Add Application
+          <button onclick="openCreateModal()" class="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            New Application
           </button>
         </div>
-      </div>
+      </section>
 
-      <!-- Kanban Columns -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+      <!-- Kanban Pipeline Columns -->
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
 
-        <!-- Column: Applied -->
-        <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80">
+        <!-- Stage: Applied -->
+        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
             <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-              <span class="font-semibold text-sm text-slate-800">Applied</span>
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Applied</h3>
             </div>
-            <span id="count-Applied" class="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">0</span>
+            <span id="colCount-Applied" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
           </div>
-          <div id="col-Applied" class="space-y-3 min-h-[120px]"></div>
+          <div id="colCards-Applied" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
         </div>
 
-        <!-- Column: Interviewing -->
-        <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80">
+        <!-- Stage: Interviewing -->
+        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
             <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              <span class="font-semibold text-sm text-slate-800">Interviewing</span>
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Interviewing</h3>
             </div>
-            <span id="count-Interviewing" class="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">0</span>
+            <span id="colCount-Interviewing" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
           </div>
-          <div id="col-Interviewing" class="space-y-3 min-h-[120px]"></div>
+          <div id="colCards-Interviewing" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
         </div>
 
-        <!-- Column: Offered -->
-        <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80">
+        <!-- Stage: Offered / Accepted -->
+        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
             <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span class="font-semibold text-sm text-slate-800">Offered / Accepted</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Offers &amp; Accepted</h3>
             </div>
-            <span id="count-Offered" class="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">0</span>
+            <span id="colCount-Offered" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
           </div>
-          <div id="col-Offered" class="space-y-3 min-h-[120px]"></div>
+          <div id="colCards-Offered" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
         </div>
 
-        <!-- Column: Rejected -->
-        <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80">
+        <!-- Stage: Archived / Rejected -->
+        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
             <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-              <span class="font-semibold text-sm text-slate-800">Archived / Rejected</span>
+              <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Archived</h3>
             </div>
-            <span id="count-Rejected" class="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">0</span>
+            <span id="colCount-Rejected" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
           </div>
-          <div id="col-Rejected" class="space-y-3 min-h-[120px]"></div>
+          <div id="colCards-Rejected" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
         </div>
 
-      </div>
+      </section>
 
-    </div>
-  </main>
+    </main>
+  </div>
 
-  <!-- Create / Edit Modal -->
-  <div id="appModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 id="appModalTitle" class="font-bold text-slate-900">Add Application</h3>
-        <button onclick="closeAppModal()" class="text-slate-400 hover:text-slate-600">
+  <!-- Application Details / Edit Modal -->
+  <div id="appModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 id="appModalTitle" class="font-bold text-sm text-white">Create New Application</h3>
+        <button onclick="closeAppModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
-      <form id="appModalForm" onsubmit="handleAppSubmit(event)" class="p-6 space-y-4">
-        <input type="hidden" id="modalAppId">
+
+      <form id="appModalForm" onsubmit="handleAppSubmit(event)" class="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+        <input type="hidden" id="formAppId">
+
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Company *</label>
-            <input type="text" id="modalCompany" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Google">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Company Name *</label>
+            <input type="text" id="formCompany" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="e.g. Stripe">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Role *</label>
-            <input type="text" id="modalRole" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Backend Engineer">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Job Title / Role *</label>
+            <input type="text" id="formRole" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="e.g. Staff Backend Engineer">
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Status</label>
-            <select id="modalStatus" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Pipeline Stage</label>
+            <select id="formStatus" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <option value="Applied">Applied</option>
               <option value="Interviewing">Interviewing</option>
               <option value="Offered">Offered</option>
@@ -245,186 +334,197 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Location</label>
-            <input type="text" id="modalLocation" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Remote / City">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Job Location</label>
+            <input type="text" id="formLocation" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="Remote / San Francisco">
           </div>
         </div>
 
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Min Salary</label>
-            <input type="number" id="modalSalaryMin" min="0" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="120000">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Salary Min</label>
+            <input type="number" id="formSalaryMin" min="0" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="160000">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Max Salary</label>
-            <input type="number" id="modalSalaryMax" min="0" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="150000">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Salary Max</label>
+            <input type="number" id="formSalaryMax" min="0" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="210000">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Currency</label>
-            <input type="text" id="modalCurrency" value="USD" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Currency</label>
+            <input type="text" id="formCurrency" value="USD" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Job Post URL</label>
-          <input type="url" id="modalJobUrl" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://careers.company.com/job/123">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Job Listing URL</label>
+          <input type="url" id="formJobUrl" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600 font-mono" placeholder="https://careers.stripe.com/jobs/...">
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Notes / Referral</label>
-          <textarea id="modalNotes" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Key contact or application context..."></textarea>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Internal Notes &amp; Strategy</label>
+          <textarea id="formNotes" rows="2" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="Referral by team director, target compensation, recruiter contact..."></textarea>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
-          <button type="button" onclick="closeAppModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Save Application</button>
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeAppModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md shadow-indigo-600/30 transition">Save Application</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Interview Schedule Modal -->
-  <div id="interviewModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-md w-full border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="font-bold text-slate-900">Schedule Interview Round</h3>
-        <button onclick="closeInterviewModal()" class="text-slate-400 hover:text-slate-600">
+  <!-- Schedule Interview Modal -->
+  <div id="interviewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">Schedule Interview Round</h3>
+        <button onclick="closeInterviewModal()" class="text-slate-400 hover:text-white p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
       <form id="interviewForm" onsubmit="handleInterviewSubmit(event)" class="p-6 space-y-4">
-        <input type="hidden" id="interviewAppId">
+        <input type="hidden" id="intAppId">
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Round Name *</label>
-          <input type="text" id="interviewRoundName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Technical Screen, System Design">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Round Name *</label>
+          <input type="text" id="intRoundName" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="System Architecture / Hiring Manager Screen">
         </div>
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scheduled Date & Time *</label>
-          <input type="datetime-local" id="interviewScheduledDate" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Scheduled Date &amp; Time *</label>
+          <input type="datetime-local" id="intScheduledDate" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Meeting Link</label>
-          <input type="url" id="interviewMeetingLink" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://meet.google.com/xyz">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Meeting Link</label>
+          <input type="url" id="intMeetingLink" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono placeholder-slate-600" placeholder="https://meet.google.com/abc-defg-hij">
         </div>
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Interviewer Name</label>
-          <input type="text" id="interviewInterviewer" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Alex (Engineering Lead)">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Interviewer Name / Title</label>
+          <input type="text" id="intInterviewer" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="e.g. Jordan (VP of Engineering)">
         </div>
         <div>
-          <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Prep Notes / Feedback</label>
-          <textarea id="interviewNotes" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Preparation topics..."></textarea>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Prep Notes</label>
+          <textarea id="intNotes" rows="2" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="Focus points, distributed systems, Kafka, past achievements..."></textarea>
         </div>
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
-          <button type="button" onclick="closeInterviewModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Schedule Round</button>
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeInterviewModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition">Confirm Round</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Upload Resume Modal -->
-  <div id="resumeModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="font-bold text-slate-900">Upload Resume</h3>
-        <button onclick="closeResumeModal()" class="text-slate-400 hover:text-slate-600">
+  <!-- Document / Resume Upload Modal -->
+  <div id="resumeModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">Attach Candidate Resume</h3>
+        <button onclick="closeResumeModal()" class="text-slate-400 hover:text-white p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
       <form id="resumeForm" onsubmit="handleResumeUpload(event)" class="p-6 space-y-4">
-        <input type="hidden" id="resumeAppId">
-        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-indigo-500 transition cursor-pointer">
-          <input type="file" id="resumeFileInput" accept=".pdf,.doc,.docx" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-          <p class="text-xs text-slate-400 mt-2">PDF, DOC, or DOCX up to 5MB</p>
+        <input type="hidden" id="resAppId">
+        <div class="border-2 border-dashed border-slate-800 hover:border-indigo-500/80 rounded-xl p-6 text-center transition cursor-pointer bg-slate-950/40">
+          <input type="file" id="resFileInput" accept=".pdf,.doc,.docx" required class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/20 file:text-indigo-400 hover:file:bg-indigo-600/30">
+          <p class="text-[11px] text-slate-500 mt-2">PDF, DOC, or DOCX up to 5MB</p>
         </div>
-        <div id="resumeUploadStatus" class="text-xs text-center font-medium hidden"></div>
+        <div id="resUploadStatus" class="text-xs text-center font-medium hidden"></div>
         <div class="flex items-center justify-end space-x-2 pt-2">
-          <button type="button" onclick="closeResumeModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
-          <button type="submit" id="resumeUploadBtn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">Upload</button>
+          <button type="button" onclick="closeResumeModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition">Upload Resume</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Status History Modal -->
-  <div id="historyModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-md w-full border border-slate-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="font-bold text-slate-900">Status History Timeline</h3>
-        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-600">
+  <div id="historyModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">Status Transition Audit Trail</h3>
+        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
       <div class="p-6">
-        <div id="historyTimeline" class="space-y-4 max-h-80 overflow-y-auto pr-2 scrollbar-thin"></div>
+        <div id="historyTimeline" class="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar"></div>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition duration-300 pointer-events-none bg-slate-900 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center">
-    <span id="toastMsg">Notification message</span>
+  <!-- Toast Notification Bar -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition duration-300 pointer-events-none px-4 py-3 rounded-xl shadow-xl flex items-center text-xs font-semibold">
+    <span id="toastText">System message</span>
   </div>
 
-  <!-- Frontend Client Script -->
+  <!-- JavaScript Client Core -->
   <script>
     let token = localStorage.getItem('token');
     let currentUser = null;
-    let allApplications = [];
+    let applicationsCache = [];
     let isSignupMode = false;
 
-    // Initialize application state
+    // Company logo color mapper based on company initial
+    const companyColors = [
+      'from-blue-600 to-indigo-600',
+      'from-violet-600 to-purple-600',
+      'from-emerald-600 to-teal-600',
+      'from-amber-600 to-orange-600',
+      'from-rose-600 to-pink-600',
+      'from-cyan-600 to-blue-600',
+    ];
+
+    function getCompanyGradient(name) {
+      const code = (name || 'A').charCodeAt(0);
+      return companyColors[code % companyColors.length];
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (token) {
-        loadUserProfile();
+        bootstrapAuthenticatedState();
       } else {
-        renderLoggedOutView();
+        renderUnauthenticatedState();
       }
     });
 
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toastMsg');
-      toastMsg.innerText = msg;
-      toast.className = `fixed bottom-6 right-6 z-50 transition duration-300 text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center ${isError ? 'bg-rose-600' : 'bg-slate-900'} text-white opacity-100 translate-y-0`;
+      const text = document.getElementById('toastText');
+      text.innerText = msg;
+      toast.className = `fixed bottom-6 right-6 z-50 transition duration-300 px-4 py-3 rounded-xl shadow-2xl flex items-center text-xs font-semibold ${isError ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-100 border border-slate-700'} opacity-100 translate-y-0`;
       setTimeout(() => {
-        toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition duration-300 pointer-events-none bg-slate-900 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center';
+        toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition duration-300 pointer-events-none px-4 py-3 rounded-xl shadow-xl flex items-center text-xs font-semibold';
       }, 3500);
     }
 
-    function switchAuthTab(mode) {
+    function switchAuthMode(mode) {
       isSignupMode = mode === 'signup';
-      const tabLogin = document.getElementById('tabLogin');
-      const tabSignup = document.getElementById('tabSignup');
-      const authTitle = document.getElementById('authTitle');
-      const authSubmitBtn = document.getElementById('authSubmitBtn');
+      const tabLogin = document.getElementById('authTabLogin');
+      const tabSignup = document.getElementById('authTabSignup');
+      const submitBtn = document.getElementById('authSubmitBtn');
 
       if (isSignupMode) {
-        tabSignup.className = 'py-2 rounded-md bg-white shadow-sm text-slate-900 font-semibold transition';
-        tabLogin.className = 'py-2 rounded-md text-slate-600 hover:text-slate-900 transition';
-        authTitle.innerText = 'Create Account';
-        authSubmitBtn.innerText = 'Register';
+        tabSignup.className = 'py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition';
+        tabLogin.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+        submitBtn.innerText = 'Create Account & Enter';
       } else {
-        tabLogin.className = 'py-2 rounded-md bg-white shadow-sm text-slate-900 font-semibold transition';
-        tabSignup.className = 'py-2 rounded-md text-slate-600 hover:text-slate-900 transition';
-        authTitle.innerText = 'Sign In';
-        authSubmitBtn.innerText = 'Sign In';
+        tabLogin.className = 'py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition';
+        tabSignup.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+        submitBtn.innerText = 'Sign In to Workspace';
       }
-      document.getElementById('authError').classList.add('hidden');
+      document.getElementById('authAlert').classList.add('hidden');
     }
 
-    function fillDemoCredentials() {
+    function autofillDemoCredentials() {
       document.getElementById('authEmail').value = 'demo@jobtracker.dev';
       document.getElementById('authPassword').value = 'DemoPassword123';
-      switchAuthTab('login');
+      switchAuthMode('login');
     }
 
     async function handleAuthSubmit(e) {
       e.preventDefault();
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value;
-      const errorDiv = document.getElementById('authError');
-      errorDiv.classList.add('hidden');
+      const alertBox = document.getElementById('authAlert');
+      alertBox.classList.add('hidden');
 
       const endpoint = isSignupMode ? '/auth/signup' : '/auth/login';
 
@@ -436,12 +536,10 @@
         });
 
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Authentication failed');
-        }
+        if (!res.ok) throw new Error(data.error || 'Authentication error');
 
         if (isSignupMode) {
-          showToast('Account created successfully! Logging in...');
+          showToast('Account registered! Logging in...');
           const loginRes = await fetch('/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -454,10 +552,10 @@
         }
 
         localStorage.setItem('token', token);
-        loadUserProfile();
+        bootstrapAuthenticatedState();
       } catch (err) {
-        errorDiv.innerText = err.message;
-        errorDiv.classList.remove('hidden');
+        alertBox.innerText = err.message;
+        alertBox.classList.remove('hidden');
       }
     }
 
@@ -465,55 +563,45 @@
       localStorage.removeItem('token');
       token = null;
       currentUser = null;
-      allApplications = [];
-      renderLoggedOutView();
-      showToast('Logged out');
+      applicationsCache = [];
+      renderUnauthenticatedState();
+      showToast('Logged out of workspace');
     }
 
-    function renderLoggedOutView() {
-      document.getElementById('authView').classList.remove('hidden');
-      document.getElementById('dashboardView').classList.add('hidden');
-      document.getElementById('authNavContainer').innerHTML = '';
+    function renderUnauthenticatedState() {
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('appShell').classList.add('hidden');
     }
 
-    async function loadUserProfile() {
+    async function bootstrapAuthenticatedState() {
       try {
-        const res = await fetch('/auth/profile', {
+        const profileRes = await fetch('/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (res.status === 401) {
+        if (profileRes.status === 401) {
           logout();
           return;
         }
 
-        currentUser = await res.json();
-        renderLoggedInView();
-        loadDashboardData();
+        currentUser = await profileRes.json();
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appShell').classList.remove('hidden');
+
+        // Render user identifiers
+        const initial = (currentUser.name || currentUser.email || 'U').substring(0, 2).toUpperCase();
+        document.getElementById('userAvatar').innerText = initial;
+        document.getElementById('userNameDisplay').innerText = currentUser.name || 'Candidate';
+        document.getElementById('userEmailDisplay').innerText = currentUser.email;
+
+        // Fetch metrics and records
+        loadWorkspaceData();
       } catch (err) {
-        console.error('Profile load error:', err);
+        console.error('Bootstrap error:', err);
       }
     }
 
-    function renderLoggedInView() {
-      document.getElementById('authView').classList.add('hidden');
-      document.getElementById('dashboardView').classList.remove('hidden');
-
-      const userInitials = (currentUser.name || currentUser.email || 'U').substring(0, 2).toUpperCase();
-      document.getElementById('authNavContainer').innerHTML = `
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center border border-slate-300">
-            ${userInitials}
-          </div>
-          <span class="text-sm font-medium text-slate-700 hidden sm:inline">${currentUser.name || currentUser.email}</span>
-          <button onclick="logout()" class="text-xs font-semibold text-slate-500 hover:text-rose-600 transition px-2 py-1 rounded hover:bg-slate-100">
-            Logout
-          </button>
-        </div>
-      `;
-    }
-
-    async function loadDashboardData() {
+    async function loadWorkspaceData() {
       try {
         const [statsRes, appsRes] = await Promise.all([
           fetch('/applications/stats', { headers: { Authorization: `Bearer ${token}` } }),
@@ -522,160 +610,176 @@
 
         if (statsRes.ok) {
           const stats = await statsRes.json();
-          document.getElementById('statTotal').innerText = stats.totalApplications || 0;
-          document.getElementById('statActive').innerText = stats.activeApplications || 0;
-          document.getElementById('statInterviewRate').innerText = stats.interviewRate || '0%';
-          document.getElementById('statOfferRate').innerText = stats.offerRate || '0%';
+          document.getElementById('metricTotal').innerText = stats.totalApplications || 0;
+          document.getElementById('metricActive').innerText = stats.activeApplications || 0;
+          document.getElementById('metricInterviewRate').innerText = stats.interviewRate || '0%';
+          document.getElementById('metricOfferRate').innerText = stats.offerRate || '0%';
         }
 
         if (appsRes.ok) {
           const appsData = await appsRes.json();
-          allApplications = appsData.applications || [];
-          renderKanbanBoard(allApplications);
+          applicationsCache = appsData.applications || [];
+          renderKanban(applicationsCache);
         }
       } catch (err) {
-        console.error('Dashboard load error:', err);
+        console.error('Workspace data load error:', err);
       }
     }
 
-    function renderKanbanBoard(applications) {
+    function renderKanban(applications) {
       const columns = {
-        Applied: document.getElementById('col-Applied'),
-        Interviewing: document.getElementById('col-Interviewing'),
-        Offered: document.getElementById('col-Offered'),
-        Rejected: document.getElementById('col-Rejected'),
+        Applied: document.getElementById('colCards-Applied'),
+        Interviewing: document.getElementById('colCards-Interviewing'),
+        Offered: document.getElementById('colCards-Offered'),
+        Rejected: document.getElementById('colCards-Rejected'),
       };
 
       const counts = { Applied: 0, Interviewing: 0, Offered: 0, Rejected: 0 };
       Object.values(columns).forEach(col => col.innerHTML = '');
 
       applications.forEach(app => {
-        let colKey = app.status;
-        if (app.status === 'Accepted') colKey = 'Offered';
-        if (app.status === 'Withdrawn') colKey = 'Rejected';
-        if (!columns[colKey]) colKey = 'Applied';
+        let col = app.status;
+        if (app.status === 'Accepted') col = 'Offered';
+        if (app.status === 'Withdrawn') col = 'Rejected';
+        if (!columns[col]) col = 'Applied';
 
-        counts[colKey]++;
+        counts[col]++;
 
         const card = document.createElement('div');
-        card.className = 'bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow transition space-y-2.5';
+        card.className = 'group p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 shadow-md hover:shadow-xl transition space-y-3';
+        
+        const gradient = getCompanyGradient(app.company);
+        const compInitial = (app.company || 'C').charAt(0).toUpperCase();
+
         card.innerHTML = `
-          <div class="flex items-start justify-between">
-            <div>
-              <h4 class="font-semibold text-slate-900 text-sm leading-snug">${escapeHtml(app.company)}</h4>
-              <p class="text-xs text-slate-500 font-medium">${escapeHtml(app.role)}</p>
+          <!-- Card Top: Company Avatar, Name, and Status Badge -->
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-tr ${gradient} text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                ${compInitial}
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-100 text-xs tracking-tight group-hover:text-indigo-400 transition">${escapeHtml(app.company)}</h4>
+                <p class="text-[11px] text-slate-400 font-medium">${escapeHtml(app.role)}</p>
+              </div>
             </div>
-            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${getStatusBadgeClass(app.status)}">
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${getStatusPillClass(app.status)}">
               ${app.status}
             </span>
           </div>
 
-          ${app.salaryMin || app.salaryMax ? `
-            <div class="text-xs text-slate-600 font-medium flex items-center">
-              <svg class="w-3.5 h-3.5 text-slate-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              ${app.salaryMin ? `${app.currency || '$'}${app.salaryMin.toLocaleString()}` : ''}
-              ${app.salaryMin && app.salaryMax ? ' - ' : ''}
-              ${app.salaryMax ? `${app.currency || '$'}${app.salaryMax.toLocaleString()}` : ''}
-            </div>
-          ` : ''}
+          <!-- Metadata Tags -->
+          <div class="flex flex-wrap gap-1.5 text-[11px]">
+            ${app.salaryMin || app.salaryMax ? `
+              <span class="mono px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800/80">
+                ${app.salaryMin ? `${app.currency || '$'}${app.salaryMin.toLocaleString()}` : ''}
+                ${app.salaryMin && app.salaryMax ? ' - ' : ''}
+                ${app.salaryMax ? `${app.currency || '$'}${app.salaryMax.toLocaleString()}` : ''}
+              </span>
+            ` : ''}
 
-          ${app.jobLocation ? `
-            <div class="text-xs text-slate-500 flex items-center">
-              <svg class="w-3.5 h-3.5 text-slate-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-              ${escapeHtml(app.jobLocation)}
-            </div>
-          ` : ''}
+            ${app.jobLocation ? `
+              <span class="px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800/80 flex items-center">
+                <svg class="w-3 h-3 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                ${escapeHtml(app.jobLocation)}
+              </span>
+            ` : ''}
+          </div>
 
-          <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-400">
-            <span>${new Date(app.appliedDate).toLocaleDateString()}</span>
-            <div class="flex items-center space-x-1.5">
+          <!-- Quick Move Dropdown / Actions -->
+          <div class="pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-slate-500 text-[11px]">
+            <span class="mono text-[10px] text-slate-500">${new Date(app.appliedDate).toLocaleDateString()}</span>
+            
+            <div class="flex items-center space-x-1">
               ${app.resumeOriginalName ? `
-                <a href="/applications/${app.id}/resume" target="_blank" title="${escapeHtml(app.resumeOriginalName)}" class="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-slate-50">
+                <a href="/applications/${app.id}/resume" target="_blank" title="Download Resume (${escapeHtml(app.resumeOriginalName)})" class="p-1 rounded hover:bg-slate-800 text-indigo-400 hover:text-indigo-300">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </a>
               ` : `
-                <button onclick="openResumeModal(${app.id})" title="Attach Resume" class="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-50">
+                <button onclick="openResumeModal(${app.id})" title="Attach Resume" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-indigo-400">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                 </button>
               `}
-              <button onclick="openInterviewModal(${app.id})" title="Schedule Interview" class="text-slate-400 hover:text-amber-600 p-1 rounded hover:bg-slate-50">
+              <button onclick="openInterviewModal(${app.id})" title="Schedule Interview Round" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-amber-400">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
               </button>
-              <button onclick="viewHistory(${app.id})" title="View Status History" class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-50">
+              <button onclick="viewHistory(${app.id})" title="Status History Audit" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               </button>
-              <button onclick="openEditModal(${app.id})" title="Edit Application" class="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-50">
+              <button onclick="openEditModal(${app.id})" title="Edit Details" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-indigo-400">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
               </button>
-              <button onclick="deleteApplication(${app.id})" title="Delete Application" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-slate-50">
+              <button onclick="deleteApplication(${app.id})" title="Delete" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-rose-400">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               </button>
             </div>
           </div>
         `;
-        columns[colKey].appendChild(card);
+        columns[col].appendChild(card);
       });
 
-      document.getElementById('count-Applied').innerText = counts.Applied;
-      document.getElementById('count-Interviewing').innerText = counts.Interviewing;
-      document.getElementById('count-Offered').innerText = counts.Offered;
-      document.getElementById('count-Rejected').innerText = counts.Rejected;
+      document.getElementById('colCount-Applied').innerText = counts.Applied;
+      document.getElementById('colCount-Interviewing').innerText = counts.Interviewing;
+      document.getElementById('colCount-Offered').innerText = counts.Offered;
+      document.getElementById('colCount-Rejected').innerText = counts.Rejected;
     }
 
-    function getStatusBadgeClass(status) {
+    function getStatusPillClass(status) {
       switch (status) {
-        case 'Applied': return 'bg-blue-50 text-blue-700 border border-blue-200';
-        case 'Interviewing': return 'bg-amber-50 text-amber-700 border border-amber-200';
-        case 'Offered': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-        case 'Accepted': return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
-        case 'Rejected': return 'bg-rose-50 text-rose-700 border border-rose-200';
-        case 'Withdrawn': return 'bg-slate-100 text-slate-700 border border-slate-200';
-        default: return 'bg-slate-50 text-slate-700';
+        case 'Applied': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+        case 'Interviewing': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        case 'Offered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        case 'Accepted': return 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
+        case 'Rejected': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+        case 'Withdrawn': return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+        default: return 'bg-slate-500/10 text-slate-400';
       }
     }
 
-    function filterApplications() {
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const status = document.getElementById('statusFilter').value;
+    function applyFilters() {
+      const search = document.getElementById('filterSearch').value.toLowerCase();
+      const status = document.getElementById('filterStatus').value;
 
-      const filtered = allApplications.filter(app => {
-        const matchesSearch = app.company.toLowerCase().includes(search) || app.role.toLowerCase().includes(search);
+      const filtered = applicationsCache.filter(app => {
+        const matchesSearch = app.company.toLowerCase().includes(search) || 
+                              app.role.toLowerCase().includes(search) || 
+                              (app.jobLocation && app.jobLocation.toLowerCase().includes(search));
         const matchesStatus = status === 'ALL' || app.status === status;
         return matchesSearch && matchesStatus;
       });
 
-      renderKanbanBoard(filtered);
+      renderKanban(filtered);
     }
 
-    function openCreateApplicationModal() {
-      document.getElementById('modalAppId').value = '';
-      document.getElementById('appModalTitle').innerText = 'Add Application';
-      document.getElementById('modalCompany').value = '';
-      document.getElementById('modalRole').value = '';
-      document.getElementById('modalStatus').value = 'Applied';
-      document.getElementById('modalLocation').value = '';
-      document.getElementById('modalSalaryMin').value = '';
-      document.getElementById('modalSalaryMax').value = '';
-      document.getElementById('modalCurrency').value = 'USD';
-      document.getElementById('modalJobUrl').value = '';
-      document.getElementById('modalNotes').value = '';
+    function openCreateModal() {
+      document.getElementById('formAppId').value = '';
+      document.getElementById('appModalTitle').innerText = 'Create New Application';
+      document.getElementById('formCompany').value = '';
+      document.getElementById('formRole').value = '';
+      document.getElementById('formStatus').value = 'Applied';
+      document.getElementById('formLocation').value = '';
+      document.getElementById('formSalaryMin').value = '';
+      document.getElementById('formSalaryMax').value = '';
+      document.getElementById('formCurrency').value = 'USD';
+      document.getElementById('formJobUrl').value = '';
+      document.getElementById('formNotes').value = '';
       document.getElementById('appModal').classList.remove('hidden');
     }
 
     function openEditModal(id) {
-      const app = allApplications.find(a => a.id === id);
+      const app = applicationsCache.find(a => a.id === id);
       if (!app) return;
-      document.getElementById('modalAppId').value = app.id;
-      document.getElementById('appModalTitle').innerText = 'Edit Application';
-      document.getElementById('modalCompany').value = app.company || '';
-      document.getElementById('modalRole').value = app.role || '';
-      document.getElementById('modalStatus').value = app.status || 'Applied';
-      document.getElementById('modalLocation').value = app.jobLocation || '';
-      document.getElementById('modalSalaryMin').value = app.salaryMin || '';
-      document.getElementById('modalSalaryMax').value = app.salaryMax || '';
-      document.getElementById('modalCurrency').value = app.currency || 'USD';
-      document.getElementById('modalJobUrl').value = app.jobPostUrl || '';
-      document.getElementById('modalNotes').value = app.notes || '';
+      document.getElementById('formAppId').value = app.id;
+      document.getElementById('appModalTitle').innerText = 'Edit Application Record';
+      document.getElementById('formCompany').value = app.company || '';
+      document.getElementById('formRole').value = app.role || '';
+      document.getElementById('formStatus').value = app.status || 'Applied';
+      document.getElementById('formLocation').value = app.jobLocation || '';
+      document.getElementById('formSalaryMin').value = app.salaryMin || '';
+      document.getElementById('formSalaryMax').value = app.salaryMax || '';
+      document.getElementById('formCurrency').value = app.currency || 'USD';
+      document.getElementById('formJobUrl').value = app.jobPostUrl || '';
+      document.getElementById('formNotes').value = app.notes || '';
       document.getElementById('appModal').classList.remove('hidden');
     }
 
@@ -685,17 +789,17 @@
 
     async function handleAppSubmit(e) {
       e.preventDefault();
-      const appId = document.getElementById('modalAppId').value;
+      const appId = document.getElementById('formAppId').value;
       const payload = {
-        company: document.getElementById('modalCompany').value.trim(),
-        role: document.getElementById('modalRole').value.trim(),
-        status: document.getElementById('modalStatus').value,
-        jobLocation: document.getElementById('modalLocation').value.trim() || undefined,
-        salaryMin: document.getElementById('modalSalaryMin').value ? Number(document.getElementById('modalSalaryMin').value) : undefined,
-        salaryMax: document.getElementById('modalSalaryMax').value ? Number(document.getElementById('modalSalaryMax').value) : undefined,
-        currency: document.getElementById('modalCurrency').value.trim() || 'USD',
-        jobPostUrl: document.getElementById('modalJobUrl').value.trim() || undefined,
-        notes: document.getElementById('modalNotes').value.trim() || undefined,
+        company: document.getElementById('formCompany').value.trim(),
+        role: document.getElementById('formRole').value.trim(),
+        status: document.getElementById('formStatus').value,
+        jobLocation: document.getElementById('formLocation').value.trim() || undefined,
+        salaryMin: document.getElementById('formSalaryMin').value ? Number(document.getElementById('formSalaryMin').value) : undefined,
+        salaryMax: document.getElementById('formSalaryMax').value ? Number(document.getElementById('formSalaryMax').value) : undefined,
+        currency: document.getElementById('formCurrency').value.trim() || 'USD',
+        jobPostUrl: document.getElementById('formJobUrl').value.trim() || undefined,
+        notes: document.getElementById('formNotes').value.trim() || undefined,
       };
 
       const method = appId ? 'PATCH' : 'POST';
@@ -715,36 +819,36 @@
         if (!res.ok) throw new Error(data.error || 'Failed to save application');
 
         closeAppModal();
-        showToast(appId ? 'Application updated' : 'Application created');
-        loadDashboardData();
+        showToast(appId ? 'Application updated' : 'Application recorded');
+        loadWorkspaceData();
       } catch (err) {
         showToast(err.message, true);
       }
     }
 
     async function deleteApplication(id) {
-      if (!confirm('Are you sure you want to delete this application and its interview schedule?')) return;
+      if (!confirm('Are you sure you want to permanently delete this application?')) return;
       try {
         const res = await fetch(`/applications/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) throw new Error('Failed to delete application');
+        if (!res.ok) throw new Error('Deletion failed');
         showToast('Application deleted');
-        loadDashboardData();
+        loadWorkspaceData();
       } catch (err) {
         showToast(err.message, true);
       }
     }
 
     function openInterviewModal(appId) {
-      document.getElementById('interviewAppId').value = appId;
-      document.getElementById('interviewRoundName').value = '';
-      document.getElementById('interviewScheduledDate').value = '';
-      document.getElementById('interviewMeetingLink').value = '';
-      document.getElementById('interviewInterviewer').value = '';
-      document.getElementById('interviewNotes').value = '';
+      document.getElementById('intAppId').value = appId;
+      document.getElementById('intRoundName').value = '';
+      document.getElementById('intScheduledDate').value = '';
+      document.getElementById('intMeetingLink').value = '';
+      document.getElementById('intInterviewer').value = '';
+      document.getElementById('intNotes').value = '';
       document.getElementById('interviewModal').classList.remove('hidden');
     }
 
@@ -754,13 +858,13 @@
 
     async function handleInterviewSubmit(e) {
       e.preventDefault();
-      const appId = document.getElementById('interviewAppId').value;
+      const appId = document.getElementById('intAppId').value;
       const payload = {
-        roundName: document.getElementById('interviewRoundName').value.trim(),
-        scheduledDate: new Date(document.getElementById('interviewScheduledDate').value).toISOString(),
-        meetingLink: document.getElementById('interviewMeetingLink').value.trim() || undefined,
-        interviewer: document.getElementById('interviewInterviewer').value.trim() || undefined,
-        feedbackNotes: document.getElementById('interviewNotes').value.trim() || undefined,
+        roundName: document.getElementById('intRoundName').value.trim(),
+        scheduledDate: new Date(document.getElementById('intScheduledDate').value).toISOString(),
+        meetingLink: document.getElementById('intMeetingLink').value.trim() || undefined,
+        interviewer: document.getElementById('intInterviewer').value.trim() || undefined,
+        feedbackNotes: document.getElementById('intNotes').value.trim() || undefined,
       };
 
       try {
@@ -774,19 +878,19 @@
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to schedule interview');
+        if (!res.ok) throw new Error(data.error || 'Failed to schedule round');
 
         closeInterviewModal();
-        showToast('Interview round scheduled');
+        showToast('Interview round recorded');
       } catch (err) {
         showToast(err.message, true);
       }
     }
 
     function openResumeModal(appId) {
-      document.getElementById('resumeAppId').value = appId;
-      document.getElementById('resumeFileInput').value = '';
-      document.getElementById('resumeUploadStatus').classList.add('hidden');
+      document.getElementById('resAppId').value = appId;
+      document.getElementById('resFileInput').value = '';
+      document.getElementById('resUploadStatus').classList.add('hidden');
       document.getElementById('resumeModal').classList.remove('hidden');
     }
 
@@ -796,17 +900,17 @@
 
     async function handleResumeUpload(e) {
       e.preventDefault();
-      const appId = document.getElementById('resumeAppId').value;
-      const fileInput = document.getElementById('resumeFileInput');
+      const appId = document.getElementById('resAppId').value;
+      const fileInput = document.getElementById('resFileInput');
       if (!fileInput.files.length) return;
 
       const formData = new FormData();
       formData.append('resume', fileInput.files[0]);
 
-      const statusDiv = document.getElementById('resumeUploadStatus');
-      statusDiv.innerText = 'Uploading document...';
-      statusDiv.className = 'text-xs text-center font-medium text-slate-600';
-      statusDiv.classList.remove('hidden');
+      const statusBox = document.getElementById('resUploadStatus');
+      statusBox.innerText = 'Uploading document...';
+      statusBox.className = 'text-xs text-center font-medium text-slate-400';
+      statusBox.classList.remove('hidden');
 
       try {
         const res = await fetch(`/applications/${appId}/resume`, {
@@ -819,11 +923,11 @@
         if (!res.ok) throw new Error(data.error || 'Upload failed');
 
         closeResumeModal();
-        showToast('Resume attached successfully');
-        loadDashboardData();
+        showToast('Resume attached to application');
+        loadWorkspaceData();
       } catch (err) {
-        statusDiv.innerText = err.message;
-        statusDiv.className = 'text-xs text-center font-medium text-rose-600';
+        statusBox.innerText = err.message;
+        statusBox.className = 'text-xs text-center font-medium text-rose-400';
       }
     }
 
@@ -838,19 +942,19 @@
         timeline.innerHTML = '';
 
         if (!history.length) {
-          timeline.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No status transitions logged yet.</p>';
+          timeline.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">No audit transitions recorded.</p>';
         } else {
           history.forEach(item => {
             const entry = document.createElement('div');
-            entry.className = 'border-l-2 border-indigo-500 pl-3 py-1 space-y-1';
+            entry.className = 'border-l-2 border-indigo-500 pl-3.5 py-1 space-y-1';
             entry.innerHTML = `
-              <div class="text-xs font-semibold text-slate-800">
-                ${escapeHtml(item.fromStatus)} &rarr; <span class="text-indigo-600">${escapeHtml(item.toStatus)}</span>
+              <div class="text-xs font-semibold text-slate-200">
+                ${escapeHtml(item.fromStatus)} &rarr; <span class="text-indigo-400">${escapeHtml(item.toStatus)}</span>
               </div>
-              <div class="text-[11px] text-slate-400">
+              <div class="mono text-[10px] text-slate-500">
                 ${new Date(item.changedAt).toLocaleString()}
               </div>
-              ${item.notes ? `<div class="text-xs text-slate-600">${escapeHtml(item.notes)}</div>` : ''}
+              ${item.notes ? `<div class="text-xs text-slate-400">${escapeHtml(item.notes)}</div>` : ''}
             `;
             timeline.appendChild(entry);
           });
@@ -858,7 +962,7 @@
 
         document.getElementById('historyModal').classList.remove('hidden');
       } catch (err) {
-        showToast('Failed to load status history', true);
+        showToast('Failed to load transition audit', true);
       }
     }
 
@@ -866,7 +970,7 @@
       document.getElementById('historyModal').classList.add('hidden');
     }
 
-    function downloadCsvExport() {
+    function downloadCsv() {
       window.location.href = `/export/csv`;
     }
 
