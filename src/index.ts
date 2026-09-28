@@ -1,6 +1,6 @@
 import app from './app';
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Startup environment validation
@@ -17,6 +17,15 @@ if (NODE_ENV === 'production') {
 
 const server = app.listen(PORT, () => {
   console.log(`Job Tracker server running on port ${PORT} [Environment: ${NODE_ENV}]`);
+});
+
+server.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`FATAL: Port ${PORT} is already in use. Please configure a different PORT in .env or stop the occupying process.`);
+  } else {
+    console.error('FATAL: Server error event:', err);
+  }
+  process.exit(1);
 });
 
 // Graceful shutdown handling
