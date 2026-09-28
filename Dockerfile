@@ -33,8 +33,10 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/prisma ./src/prisma
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/index.js ./index.js
 
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+
+CMD ["node", "dist/src/index.js"]
