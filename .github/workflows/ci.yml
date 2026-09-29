@@ -7,25 +7,46 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    name: Build & Typecheck
+  test:
+    name: Typecheck & test
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: jobtracker_user
+          POSTGRES_PASSWORD: jobtracker_password
+          POSTGRES_DB: jobtracker_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobtracker_user -d jobtracker_db"
+          --health-interval 5s --health-timeout 5s --health-retries 10
 
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+    env:
+      DATABASE_URL: postgresql://jobtracker_user:jobtracker_password@localhost:5432/jobtracker_db
+      JWT_SECRET: ci-test-secret-that-is-at-least-32-characters
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npx prisma contract emit
+      - name: Verify generated contract is committed
+        run: git diff --exit-code -- src/prisma/contract.json src/prisma/contract.d.ts
+      - run: npm run typecheck
+      - run: npx prisma db init
+      - run: npm test
 
-      - name: Emit Prisma contract
-        run: npx prisma contract emit
-
-      - name: Typecheck and compile
-        run: npm run build
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --target runner -t job-tracker .

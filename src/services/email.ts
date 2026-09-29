@@ -60,8 +60,10 @@ export class EmailService {
    */
   static async sendPasswordReset(payload: PasswordResetPayload): Promise<boolean> {
     const subject = 'Password Reset Request - Job Application Tracker';
+    // Never write live reset tokens to production logs
+    const tokenInfo = process.env.NODE_ENV === 'production' ? '[redacted]' : payload.resetToken;
     console.info(
-      `[EmailService] Simulated password reset token delivery to ${payload.toEmail} | Token: ${payload.resetToken}`
+      `[EmailService] Simulated delivery to ${payload.toEmail} | Subject: "${subject}" | Token: ${tokenInfo}`
     );
     return true;
   }

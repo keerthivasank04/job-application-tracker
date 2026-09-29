@@ -5,33 +5,83 @@ import { db } from '../prisma/db';
 import { authMiddleware } from '../middleware/auth';
 import { uploadResume } from '../middleware/upload';
 import {
+  VALID_STATUSES,
   validateCreateApplication,
   validateUpdateApplication,
   validateCreateInterview,
 } from '../middleware/validate';
+import { toDbTimestamp } from '../utils/serialize';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
+type OwnedResult =
+  | { ok: true; application: any }
+  | { ok: false; status: number; error: string };
+
+/** Parse `:id`, load the application and verify it belongs to the caller. */
+async function getOwnedApplication(req: Request): Promise<OwnedResult> {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return { ok: false, status: 400, error: 'Invalid ID' };
+  }
+
+  const application = await db.orm.public.Application.where({ id }).first();
+  if (!application) {
+    return { ok: false, status: 404, error: 'Application not found' };
+  }
+
+  if (application.userId !== req.user!.userId) {
+    return { ok: false, status: 403, error: 'Forbidden' };
+  }
+
+  return { ok: true, application };
+}
+
+/** Trim a string; empty strings become null so optional fields can be cleared. */
+function cleanOptional(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function removeFileQuietly(filePath: string | null | undefined) {
+  if (!filePath) return;
+  try {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  } catch (err) {
+    console.warn('Could not remove file:', filePath, err);
+  }
+}
+
+/** Escape LIKE wildcards so user input is matched literally. */
+function escapeLike(input: string): string {
+  return input.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+}
+
 // CREATE application
 router.post('/', validateCreateApplication, async (req: Request, res: Response) => {
   try {
-    const { company, role, status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl } = req.body;
+    const { company, role, status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl, appliedDate } = req.body;
     const userId = req.user!.userId;
 
-    const application = await db.orm.Application.create({
+    const data: Record<string, unknown> = {
       company: company.trim(),
       role: role.trim(),
       status: status || 'Applied',
-      notes: notes ?? null,
+      notes: cleanOptional(notes) ?? null,
       salaryMin: salaryMin ?? null,
       salaryMax: salaryMax ?? null,
-      currency: currency ?? 'USD',
-      jobLocation: jobLocation ?? null,
-      jobPostUrl: jobPostUrl ?? null,
+      currency: (cleanOptional(currency) ?? 'USD').toUpperCase(),
+      jobLocation: cleanOptional(jobLocation) ?? null,
+      jobPostUrl: cleanOptional(jobPostUrl) ?? null,
       userId,
-    });
+    };
+    if (appliedDate) data.appliedDate = toDbTimestamp(appliedDate);
+
+    const application = await db.orm.public.Application.create(data);
 
     res.status(201).json(application);
   } catch (error) {
@@ -40,19 +90,33 @@ router.post('/', validateCreateApplication, async (req: Request, res: Response) 
   }
 });
 
-// LIST applications with cursor pagination & search/filtering
+// LIST applications with cursor pagination & filtering
 router.get('/', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
     const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 10));
     const cursor = req.query.cursor ? Number(req.query.cursor) : undefined;
     const status = req.query.status ? String(req.query.status) : undefined;
-    const company = req.query.company ? String(req.query.company).toLowerCase() : undefined;
+    const company = req.query.company ? String(req.query.company).trim() : undefined;
 
-    let query = db.orm.Application.where({ userId });
+    if (cursor !== undefined && (!Number.isInteger(cursor) || cursor <= 0)) {
+      return res.status(400).json({ error: 'cursor must be a positive integer' });
+    }
+
+    if (status && !VALID_STATUSES.includes(status as any)) {
+      return res.status(400).json({ error: `Invalid status '${status}'` });
+    }
+
+    let query = db.orm.public.Application.where({ userId });
 
     if (status) {
       query = query.where({ status });
+    }
+
+    // Filter in SQL (case-insensitive) so pagination stays correct
+    if (company) {
+      const pattern = `%${escapeLike(company)}%`;
+      query = query.where((app: any) => app.company.ilike(pattern));
     }
 
     let orderedQuery = query.orderBy((app: any) => app.id.desc());
@@ -61,19 +125,11 @@ router.get('/', async (req: Request, res: Response) => {
       orderedQuery = orderedQuery.cursor({ id: cursor });
     }
 
-    let applications = await orderedQuery.limit(limit).all();
-
-    // In-memory company filter if queried
-    if (company) {
-      applications = applications.filter((app: any) =>
-        app.company.toLowerCase().includes(company)
-      );
-    }
-
-    const nextCursor =
-      applications.length === limit
-        ? applications[applications.length - 1].id
-        : null;
+    // Fetch one extra row to know whether another page exists
+    const rows = await orderedQuery.limit(limit + 1).all();
+    const hasMore = rows.length > limit;
+    const applications = hasMore ? rows.slice(0, limit) : rows;
+    const nextCursor = hasMore ? applications[applications.length - 1].id : null;
 
     res.json({ applications, nextCursor });
   } catch (error) {
@@ -86,17 +142,10 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/stats', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const applications = await db.orm.Application.where({ userId }).all();
+    const applications = await db.orm.public.Application.where({ userId }).all();
 
     const totalApplications = applications.length;
-    const byStatus: Record<string, number> = {
-      Applied: 0,
-      Interviewing: 0,
-      Offered: 0,
-      Rejected: 0,
-      Accepted: 0,
-      Withdrawn: 0,
-    };
+    const byStatus: Record<string, number> = Object.fromEntries(VALID_STATUSES.map((s) => [s, 0]));
 
     let totalSalarySum = 0;
     let salaryCount = 0;
@@ -106,27 +155,24 @@ router.get('/stats', async (req: Request, res: Response) => {
         byStatus[app.status]++;
       }
 
-      if (app.salaryMax) {
-        totalSalarySum += app.salaryMax;
-        salaryCount++;
-      } else if (app.salaryMin) {
-        totalSalarySum += app.salaryMin;
+      const salary = app.salaryMax ?? app.salaryMin;
+      if (typeof salary === 'number') {
+        totalSalarySum += salary;
         salaryCount++;
       }
     }
 
-    const activeApplications = byStatus.Applied + byStatus.Interviewing;
+    const activeApplications = byStatus.Applied + byStatus.Interviewing + byStatus.Offered;
     const interviewCount = byStatus.Interviewing + byStatus.Offered + byStatus.Accepted;
-    const interviewRate = totalApplications > 0 ? Number(((interviewCount / totalApplications) * 100).toFixed(1)) : 0;
     const offerCount = byStatus.Offered + byStatus.Accepted;
-    const offerRate = totalApplications > 0 ? Number(((offerCount / totalApplications) * 100).toFixed(1)) : 0;
+    const pct = (n: number) => (totalApplications > 0 ? Number(((n / totalApplications) * 100).toFixed(1)) : 0);
     const averageSalary = salaryCount > 0 ? Math.round(totalSalarySum / salaryCount) : null;
 
     res.json({
       totalApplications,
       activeApplications,
-      interviewRate: `${interviewRate}%`,
-      offerRate: `${offerRate}%`,
+      interviewRate: `${pct(interviewCount)}%`,
+      offerRate: `${pct(offerCount)}%`,
       averageSalary,
       byStatus,
     });
@@ -139,21 +185,9 @@ router.get('/stats', async (req: Request, res: Response) => {
 // GET single application by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
-
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    res.json(application);
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    res.json(result.application);
   } catch (error) {
     console.error('Get application error:', error);
     res.status(500).json({ error: 'Failed to fetch application' });
@@ -163,22 +197,11 @@ router.get('/:id', async (req: Request, res: Response) => {
 // GET status history for an application
 router.get('/:id/history', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Application not found' });
-    }
-
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    const history = await db.orm.StatusHistory
-      .where({ applicationId: id })
+    const history = await db.orm.public.StatusHistory
+      .where({ applicationId: result.application.id })
       .orderBy((h: any) => h.changedAt.asc())
       .all();
 
@@ -192,29 +215,18 @@ router.get('/:id/history', async (req: Request, res: Response) => {
 // CREATE interview round for an application
 router.post('/:id/interviews', validateCreateInterview, async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
-
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Application not found' });
-    }
-
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
 
     const { roundName, scheduledDate, meetingLink, interviewer, feedbackNotes, status } = req.body;
 
-    const interview = await db.orm.Interview.create({
-      applicationId: id,
+    const interview = await db.orm.public.Interview.create({
+      applicationId: result.application.id,
       roundName: roundName.trim(),
-      scheduledDate: new Date(scheduledDate),
-      meetingLink: meetingLink ?? null,
-      interviewer: interviewer ?? null,
-      feedbackNotes: feedbackNotes ?? null,
+      scheduledDate: toDbTimestamp(scheduledDate),
+      meetingLink: cleanOptional(meetingLink) ?? null,
+      interviewer: cleanOptional(interviewer) ?? null,
+      feedbackNotes: cleanOptional(feedbackNotes) ?? null,
       status: status || 'Scheduled',
     });
 
@@ -228,22 +240,11 @@ router.post('/:id/interviews', validateCreateInterview, async (req: Request, res
 // LIST interview rounds for an application
 router.get('/:id/interviews', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Application not found' });
-    }
-
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    const interviews = await db.orm.Interview
-      .where({ applicationId: id })
+    const interviews = await db.orm.public.Interview
+      .where({ applicationId: result.application.id })
       .orderBy((i: any) => i.scheduledDate.asc())
       .all();
 
@@ -257,46 +258,30 @@ router.get('/:id/interviews', async (req: Request, res: Response) => {
 // UPLOAD resume for an application
 router.post('/:id/resume', uploadResume.single('resume'), async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
-
     if (!req.file) {
       return res.status(400).json({ error: 'Please attach a resume file (.pdf, .doc, .docx under 5MB)' });
     }
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      // Clean up uploaded file if application not found
-      fs.unlinkSync(req.file.path);
-      return res.status(404).json({ error: 'Application not found' });
+    const result = await getOwnedApplication(req);
+    if (!result.ok) {
+      removeFileQuietly(req.file.path);
+      return res.status(result.status).json({ error: result.error });
     }
 
-    if (application.userId !== req.user!.userId) {
-      fs.unlinkSync(req.file.path);
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    // Replace any previously attached resume
+    removeFileQuietly(result.application.resumePath);
 
-    // If an existing resume exists on disk, remove it
-    if (application.resumePath && fs.existsSync(application.resumePath)) {
-      try {
-        fs.unlinkSync(application.resumePath);
-      } catch (err) {
-        console.warn('Could not remove old resume file:', err);
-      }
-    }
-
-    const updated = await db.orm.Application.where({ id }).update({
+    const updated = await db.orm.public.Application.where({ id: result.application.id }).update({
       resumePath: req.file.path,
       resumeOriginalName: req.file.originalname,
       resumeMimeType: req.file.mimetype,
-      resumeUploadedAt: new Date(),
+      resumeUploadedAt: toDbTimestamp(new Date()),
     });
 
     res.json(updated);
   } catch (error) {
     console.error('Upload resume error:', error);
+    if (req.file) removeFileQuietly(req.file.path);
     res.status(500).json({ error: 'Failed to upload resume file' });
   }
 });
@@ -304,26 +289,16 @@ router.post('/:id/resume', uploadResume.single('resume'), async (req: Request, r
 // DOWNLOAD resume for an application
 router.get('/:id/resume', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Application not found' });
-    }
-
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    if (!application.resumePath || !fs.existsSync(application.resumePath)) {
+    const { resumePath, resumeOriginalName } = result.application;
+    if (!resumePath || !fs.existsSync(resumePath)) {
       return res.status(404).json({ error: 'No resume attached to this application' });
     }
 
-    const filename = application.resumeOriginalName || path.basename(application.resumePath);
-    res.download(path.resolve(application.resumePath), filename);
+    const filename = resumeOriginalName || path.basename(resumePath);
+    res.download(path.resolve(resumePath), filename);
   } catch (error) {
     console.error('Download resume error:', error);
     res.status(500).json({ error: 'Failed to download resume file' });
@@ -333,29 +308,12 @@ router.get('/:id/resume', async (req: Request, res: Response) => {
 // DELETE resume for an application
 router.delete('/:id/resume', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Application not found' });
-    }
+    removeFileQuietly(result.application.resumePath);
 
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    if (application.resumePath && fs.existsSync(application.resumePath)) {
-      try {
-        fs.unlinkSync(application.resumePath);
-      } catch (err) {
-        console.warn('Could not remove resume file:', err);
-      }
-    }
-
-    const updated = await db.orm.Application.where({ id }).update({
+    const updated = await db.orm.public.Application.where({ id: result.application.id }).update({
       resumePath: null,
       resumeOriginalName: null,
       resumeMimeType: null,
@@ -372,42 +330,44 @@ router.delete('/:id/resume', async (req: Request, res: Response) => {
 // UPDATE application — auto-logs StatusHistory when status changes
 router.patch('/:id', validateUpdateApplication, async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    const application = result.application;
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    const { company, role, status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl } = req.body;
+    const { company, role, status, notes, salaryMin, salaryMax, currency, jobLocation, jobPostUrl, appliedDate, statusNote } = req.body;
     const updateData: Record<string, any> = {};
 
     if (company !== undefined) updateData.company = company.trim();
     if (role !== undefined) updateData.role = role.trim();
     if (status !== undefined) updateData.status = status;
-    if (notes !== undefined) updateData.notes = notes;
+    if (notes !== undefined) updateData.notes = cleanOptional(notes);
     if (salaryMin !== undefined) updateData.salaryMin = salaryMin;
     if (salaryMax !== undefined) updateData.salaryMax = salaryMax;
-    if (currency !== undefined) updateData.currency = currency;
-    if (jobLocation !== undefined) updateData.jobLocation = jobLocation;
-    if (jobPostUrl !== undefined) updateData.jobPostUrl = jobPostUrl;
+    if (currency !== undefined) updateData.currency = (cleanOptional(currency) ?? 'USD').toUpperCase();
+    if (jobLocation !== undefined) updateData.jobLocation = cleanOptional(jobLocation);
+    if (jobPostUrl !== undefined) updateData.jobPostUrl = cleanOptional(jobPostUrl);
+    if (appliedDate !== undefined && appliedDate !== null) updateData.appliedDate = toDbTimestamp(appliedDate);
 
-    const updated = await db.orm.Application.where({ id }).update(updateData);
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields provided to update' });
+    }
+
+    // Validate the salary range against the values that will actually be stored
+    const finalMin = 'salaryMin' in updateData ? updateData.salaryMin : application.salaryMin;
+    const finalMax = 'salaryMax' in updateData ? updateData.salaryMax : application.salaryMax;
+    if (typeof finalMin === 'number' && typeof finalMax === 'number' && finalMin > finalMax) {
+      return res.status(400).json({ error: 'salaryMin cannot be greater than salaryMax' });
+    }
+
+    const updated = await db.orm.public.Application.where({ id: application.id }).update(updateData);
 
     // When status changes, record the transition in StatusHistory
     if (status !== undefined && status !== application.status) {
-      await db.orm.StatusHistory.create({
-        applicationId: id,
+      await db.orm.public.StatusHistory.create({
+        applicationId: application.id,
         fromStatus: application.status,
         toStatus: status,
-        notes: notes ?? null,
+        notes: cleanOptional(statusNote) ?? null,
       });
     }
 
@@ -418,33 +378,20 @@ router.patch('/:id', validateUpdateApplication, async (req: Request, res: Respon
   }
 });
 
-// DELETE application
+// DELETE application (and its interviews, history and resume)
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID' });
-    }
+    const result = await getOwnedApplication(req);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    const id = result.application.id;
 
-    const application = await db.orm.Application.where({ id }).first();
-    if (!application) {
-      return res.status(404).json({ error: 'Not found' });
-    }
+    // Child rows must be removed first because of foreign-key constraints
+    await db.orm.public.Interview.where({ applicationId: id }).deleteAll();
+    await db.orm.public.StatusHistory.where({ applicationId: id }).deleteAll();
 
-    if (application.userId !== req.user!.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    removeFileQuietly(result.application.resumePath);
 
-    // Clean up resume from disk if present
-    if (application.resumePath && fs.existsSync(application.resumePath)) {
-      try {
-        fs.unlinkSync(application.resumePath);
-      } catch (err) {
-        console.warn('Could not remove resume file on application delete:', err);
-      }
-    }
-
-    await db.orm.Application.where({ id }).delete();
+    await db.orm.public.Application.where({ id }).delete();
     res.status(204).send();
   } catch (error) {
     console.error('Delete application error:', error);

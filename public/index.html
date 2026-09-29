@@ -1,988 +1,488 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-900">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Application Tracker — Enterprise Career Pipeline</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .mono { font-family: 'JetBrains Mono', monospace; }
-    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
-  </style>
+  <meta name="description" content="Track the jobs you've applied to, your interviews and offers in one place.">
+  <meta name="color-scheme" content="light dark">
+  <title>Job Tracker</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
 </head>
-<body class="h-full bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white antialiased">
+<body>
+  <!-- SVG icon sprite -->
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><path d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1m-9 0h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm-2 6h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5m0 0-4 4m4-4 4 4M5 19h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4m8-4v4M4 10h16"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Zm0 0v5h5M9 13h6m-6 4h4"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 1 1 12 0c0 5.5-6 11-6 11Z"/><circle cx="12" cy="10" r="2"/></symbol>
+    <symbol id="i-money" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5h.01M17.5 14.5h.01"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16m0-10h2a2 2 0 0 1 2 2v8M3 21h18M8 7h4m-4 4h4m-4 4h4"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 8-4 4 4 4m8-8 4 4-4 4M14 4l-4 16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5m6-6-6 6 6 6"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4m0 0h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></symbol>
+  </svg>
 
-  <!-- Unauthenticated Screen -->
-  <div id="authScreen" class="min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
-    <div class="w-full max-w-md">
-      <!-- App Brand Header -->
-      <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-lg shadow-indigo-500/20 mb-3 border border-indigo-400/30">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-        </div>
-        <h1 class="text-2xl font-extrabold tracking-tight text-white">Career Intelligence</h1>
-        <p class="text-xs text-slate-400 mt-1">High-performance application pipeline & candidate tracker</p>
-      </div>
+  <!-- ============================== AUTH ============================== -->
+  <div id="authView" class="auth" hidden>
+    <header class="auth-header">
+      <a class="wordmark" href="#" aria-label="Job Tracker home"><span class="wordmark-mark">j</span>jobtracker</a>
+    </header>
+    <main class="auth-main">
+      <section class="auth-card" aria-labelledby="authTitle">
+        <!-- Sign in / Sign up -->
+        <div id="authPanelMain">
+          <h1 id="authTitle" class="auth-title">Ready to take the next step?</h1>
+          <p id="authSubtitle" class="auth-subtitle">Sign in to keep track of every job you apply for.</p>
 
-      <!-- Auth Card -->
-      <div class="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-7 shadow-2xl shadow-black/80">
-        <!-- Tab Selector -->
-        <div class="grid grid-cols-2 gap-1 p-1 bg-slate-950/60 rounded-xl mb-6 border border-slate-800/80 text-xs font-semibold">
-          <button id="authTabLogin" onclick="switchAuthMode('login')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition">Sign In</button>
-          <button id="authTabSignup" onclick="switchAuthMode('signup')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition">Create Account</button>
-        </div>
-
-        <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Work Email</label>
-            <input type="email" id="authEmail" required class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-slate-600 transition" placeholder="alex@company.dev">
+          <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+            <button type="button" role="tab" id="tabLogin" aria-selected="true" data-auth-mode="login">Sign in</button>
+            <button type="button" role="tab" id="tabSignup" aria-selected="false" data-auth-mode="signup">Create account</button>
           </div>
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Password</label>
-              <button type="button" onclick="triggerPasswordResetModal()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium">Forgot?</button>
+
+          <form id="authForm" class="form" novalidate>
+            <div class="field" id="nameField" hidden>
+              <label for="authName">Full name <span class="muted">(optional)</span></label>
+              <input id="authName" name="name" type="text" autocomplete="name" maxlength="100">
             </div>
-            <input type="password" id="authPassword" required minlength="8" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-slate-600 transition" placeholder="Minimum 8 characters">
-          </div>
+            <div class="field">
+              <label for="authEmail">Email address <span class="req">*</span></label>
+              <input id="authEmail" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <div class="field-row">
+                <label for="authPassword">Password <span class="req">*</span></label>
+                <button type="button" class="link" id="forgotLink">Forgot password?</button>
+              </div>
+              <div class="input-affix">
+                <input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="8">
+                <button type="button" class="affix-btn" data-toggle-password="authPassword" aria-label="Show password">Show</button>
+              </div>
+              <p class="hint" id="passwordHint" hidden>Use at least 8 characters.</p>
+            </div>
+            <div class="alert alert--error" id="authError" role="alert" hidden></div>
+            <button type="submit" class="btn btn--primary btn--lg btn--block" id="authSubmit">Sign in</button>
+          </form>
 
-          <div id="authAlert" class="text-xs text-rose-400 font-medium hidden p-3 rounded-lg bg-rose-500/10 border border-rose-500/20"></div>
-
-          <button type="submit" id="authSubmitBtn" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition transform active:scale-[0.99]">
-            Sign In to Workspace
-          </button>
-        </form>
-
-        <div class="mt-6 pt-5 border-t border-slate-800/80 text-center">
-          <button type="button" onclick="autofillDemoCredentials()" class="text-xs text-slate-400 hover:text-indigo-400 font-medium flex items-center justify-center mx-auto transition">
-            <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Autofill Demo Credentials (demo@jobtracker.dev)
-          </button>
+          <div class="auth-divider"><span>or</span></div>
+          <button type="button" class="btn btn--outline btn--lg btn--block" id="demoLink">Continue with the demo account</button>
+          <p class="fine-print">The demo account exists after running <code>npm run seed</code>.</p>
         </div>
-      </div>
-    </div>
+
+        <!-- Forgot / reset password -->
+        <div id="authPanelReset" hidden>
+          <button type="button" class="link back-link" id="backToLogin"><svg class="icon icon--sm"><use href="#i-arrow-left"/></svg>Back to sign in</button>
+          <h1 class="auth-title">Reset your password</h1>
+          <p class="auth-subtitle" id="resetSubtitle">Enter your account email and we'll send you a reset code.</p>
+
+          <form id="forgotForm" class="form" novalidate>
+            <div class="field">
+              <label for="forgotEmail">Email address <span class="req">*</span></label>
+              <input id="forgotEmail" type="email" autocomplete="email" required>
+            </div>
+            <div class="alert alert--error" id="forgotError" role="alert" hidden></div>
+            <button type="submit" class="btn btn--primary btn--lg btn--block">Send reset code</button>
+          </form>
+
+          <form id="resetForm" class="form" novalidate hidden>
+            <div class="alert alert--info" id="resetInfo"></div>
+            <div class="field">
+              <label for="resetToken">Reset code <span class="req">*</span></label>
+              <input id="resetToken" type="text" autocomplete="one-time-code" required spellcheck="false" class="mono">
+            </div>
+            <div class="field">
+              <label for="resetPassword">New password <span class="req">*</span></label>
+              <input id="resetPassword" type="password" autocomplete="new-password" required minlength="8">
+              <p class="hint">Use at least 8 characters.</p>
+            </div>
+            <div class="alert alert--error" id="resetError" role="alert" hidden></div>
+            <button type="submit" class="btn btn--primary btn--lg btn--block">Set new password</button>
+          </form>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer"><span>© <span class="year"></span> Job Tracker</span><a href="/api-docs/" target="_blank" rel="noopener">API docs</a></footer>
   </div>
 
-  <!-- Authenticated Application Shell -->
-  <div id="appShell" class="min-h-screen flex flex-col hidden bg-slate-950">
-
-    <!-- Top Global Header -->
-    <header class="h-16 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between px-6">
-      <div class="flex items-center space-x-6">
-        <!-- Logo -->
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20">
-            JT
-          </div>
-          <div>
-            <span class="font-bold text-sm tracking-tight text-white">Job Tracker</span>
-            <span class="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">v1.0 Pro</span>
-          </div>
+  <!-- ============================== APP ============================== -->
+  <div id="appView" class="app" hidden>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <div class="header-left">
+          <a class="wordmark" href="#jobs" aria-label="Job Tracker home"><span class="wordmark-mark">j</span>jobtracker</a>
+          <nav class="main-nav" aria-label="Main">
+            <a class="nav-link" href="#jobs" data-view="jobs">My jobs</a>
+            <a class="nav-link" href="#pipeline" data-view="pipeline">Pipeline</a>
+            <a class="nav-link" href="#interviews" data-view="interviews">Interviews<span class="nav-badge" id="interviewBadge" hidden>0</span></a>
+          </nav>
         </div>
-
-        <!-- Breadcrumb / Section -->
-        <div class="hidden md:flex items-center text-xs text-slate-400 space-x-2 pl-4 border-l border-slate-800">
-          <span>Workspace</span>
-          <span>/</span>
-          <span class="text-slate-200 font-semibold">Active Recruitment Pipeline</span>
-        </div>
-      </div>
-
-      <!-- Header Actions -->
-      <div class="flex items-center space-x-3">
-        <!-- Health status indicator -->
-        <div id="systemHealthBadge" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Engine Online</span>
-        </div>
-
-        <a href="/api-docs/" target="_blank" class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-slate-300 transition flex items-center">
-          <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-          API Spec
-        </a>
-
-        <!-- User profile badge & logout -->
-        <div class="flex items-center space-x-2 pl-2 border-l border-slate-800">
-          <div id="userAvatar" class="w-8 h-8 rounded-lg bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 font-bold text-xs flex items-center justify-center">
-            US
+        <div class="header-right">
+          <button type="button" class="header-cta" id="newAppBtn"><svg class="icon"><use href="#i-plus"/></svg><span>Add a job</span></button>
+          <span class="header-sep" aria-hidden="true"></span>
+          <div class="menu">
+            <button type="button" class="avatar-btn" id="userMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">
+              <span class="avatar" id="userAvatar">?</span>
+            </button>
+            <div class="menu-list" id="userMenu" role="menu" hidden>
+              <div class="menu-user">
+                <span class="menu-user-name" id="userName">—</span>
+                <span class="menu-user-email" id="userEmail"></span>
+              </div>
+              <hr>
+              <button type="button" role="menuitem" data-action="open-profile"><svg class="icon"><use href="#i-user"/></svg>Profile &amp; settings</button>
+              <button type="button" role="menuitem" data-action="export"><svg class="icon"><use href="#i-download"/></svg>Export my jobs (CSV)</button>
+              <button type="button" role="menuitem" data-action="toggle-theme" id="themeToggle"><svg class="icon"><use href="#i-moon"/></svg><span>Dark theme</span></button>
+              <a role="menuitem" href="/api-docs/" target="_blank" rel="noopener"><svg class="icon"><use href="#i-code"/></svg>API documentation</a>
+              <hr>
+              <button type="button" role="menuitem" data-action="logout"><svg class="icon"><use href="#i-logout"/></svg>Sign out</button>
+            </div>
           </div>
-          <div class="hidden lg:block text-left">
-            <p id="userNameDisplay" class="text-xs font-semibold text-white leading-tight">Candidate</p>
-            <p id="userEmailDisplay" class="text-[10px] text-slate-400 leading-tight">user@example.com</p>
-          </div>
-          <button onclick="logout()" title="Sign Out" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-          </button>
         </div>
       </div>
     </header>
 
-    <!-- Main Workspace View -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto px-6 py-6 space-y-6">
-
-      <!-- Metric KPI Strip -->
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card: Total Pipeline -->
-        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span class="font-medium uppercase tracking-wider text-[11px]">Total Tracked</span>
-            <div class="p-1 rounded bg-slate-800 text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-            </div>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span id="metricTotal" class="text-2xl font-extrabold text-white">0</span>
-            <span class="text-xs text-slate-500 font-medium">applications</span>
-          </div>
-        </div>
-
-        <!-- Card: In Active Rounds -->
-        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span class="font-medium uppercase tracking-wider text-[11px]">Active Candidates</span>
-            <div class="p-1 rounded bg-indigo-500/10 text-indigo-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span id="metricActive" class="text-2xl font-extrabold text-indigo-400">0</span>
-            <span class="text-xs text-slate-500 font-medium">in active stages</span>
-          </div>
-        </div>
-
-        <!-- Card: Interview Conversion -->
-        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span class="font-medium uppercase tracking-wider text-[11px]">Interview Conversion</span>
-            <div class="p-1 rounded bg-amber-500/10 text-amber-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            </div>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span id="metricInterviewRate" class="text-2xl font-extrabold text-amber-400">0%</span>
-            <span class="text-xs text-slate-500 font-medium">lead to rounds</span>
-          </div>
-        </div>
-
-        <!-- Card: Offer Rate -->
-        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition">
-          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span class="font-medium uppercase tracking-wider text-[11px]">Offer Conversion</span>
-            <div class="p-1 rounded bg-emerald-500/10 text-emerald-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span id="metricOfferRate" class="text-2xl font-extrabold text-emerald-400">0%</span>
-            <span class="text-xs text-slate-500 font-medium">closed offers</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Control Toolbar -->
-      <section class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
-        <!-- Search & Filter Controls -->
-        <div class="flex flex-1 items-center space-x-3">
-          <!-- Search box -->
-          <div class="relative flex-1 max-w-md">
-            <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="Filter by company, position, or location..." class="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          </div>
-
-          <!-- Status Dropdown -->
-          <select id="filterStatus" onchange="applyFilters()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="ALL">All Stages</option>
-            <option value="Applied">Applied</option>
-            <option value="Interviewing">Interviewing</option>
-            <option value="Offered">Offered</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Withdrawn">Withdrawn</option>
-          </select>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex items-center space-x-2.5">
-          <button onclick="downloadCsv()" class="px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-xs font-semibold text-slate-300 border border-slate-700/60 transition flex items-center">
-            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            Export CSV
-          </button>
-          <button onclick="openCreateModal()" class="px-3.5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition flex items-center">
-            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            New Application
-          </button>
-        </div>
-      </section>
-
-      <!-- Kanban Pipeline Columns -->
-      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
-
-        <!-- Stage: Applied -->
-        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Applied</h3>
-            </div>
-            <span id="colCount-Applied" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
-          </div>
-          <div id="colCards-Applied" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
-        </div>
-
-        <!-- Stage: Interviewing -->
-        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Interviewing</h3>
-            </div>
-            <span id="colCount-Interviewing" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
-          </div>
-          <div id="colCards-Interviewing" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
-        </div>
-
-        <!-- Stage: Offered / Accepted -->
-        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Offers &amp; Accepted</h3>
-            </div>
-            <span id="colCount-Offered" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
-          </div>
-          <div id="colCards-Offered" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
-        </div>
-
-        <!-- Stage: Archived / Rejected -->
-        <div class="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3.5 flex flex-col">
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-slate-500"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Archived</h3>
-            </div>
-            <span id="colCount-Rejected" class="mono text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">0</span>
-          </div>
-          <div id="colCards-Rejected" class="space-y-3 min-h-[140px] custom-scrollbar"></div>
-        </div>
-
-      </section>
-
-    </main>
-  </div>
-
-  <!-- Application Details / Edit Modal -->
-  <div id="appModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-        <h3 id="appModalTitle" class="font-bold text-sm text-white">Create New Application</h3>
-        <button onclick="closeAppModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-
-      <form id="appModalForm" onsubmit="handleAppSubmit(event)" class="p-6 space-y-4 overflow-y-auto custom-scrollbar">
-        <input type="hidden" id="formAppId">
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Company Name *</label>
-            <input type="text" id="formCompany" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="e.g. Stripe">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Job Title / Role *</label>
-            <input type="text" id="formRole" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="e.g. Staff Backend Engineer">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Pipeline Stage</label>
-            <select id="formStatus" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-              <option value="Applied">Applied</option>
-              <option value="Interviewing">Interviewing</option>
-              <option value="Offered">Offered</option>
-              <option value="Accepted">Accepted</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Withdrawn">Withdrawn</option>
+    <!-- ===== MY JOBS ===== -->
+    <main class="view" id="jobsView" aria-label="My jobs">
+      <section class="search-hero">
+        <form class="searchbar" id="searchForm" role="search">
+          <label class="searchbar-field">
+            <svg class="icon"><use href="#i-search"/></svg>
+            <span class="sr-only">What</span>
+            <input type="search" id="searchWhat" placeholder="Job title, keywords, or company" autocomplete="off">
+          </label>
+          <span class="searchbar-sep" aria-hidden="true"></span>
+          <label class="searchbar-field">
+            <svg class="icon"><use href="#i-pin"/></svg>
+            <span class="sr-only">Where</span>
+            <input type="search" id="searchWhere" placeholder='City, or "remote"' autocomplete="off">
+          </label>
+          <button type="submit" class="btn btn--primary searchbar-btn">Find jobs</button>
+        </form>
+        <div class="filter-pills" aria-label="Filters">
+          <label class="pill-select"><span class="sr-only">Date applied</span>
+            <select id="filterDate">
+              <option value="">Date applied</option>
+              <option value="1">Last 24 hours</option>
+              <option value="3">Last 3 days</option>
+              <option value="7">Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30">Last 30 days</option>
             </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Job Location</label>
-            <input type="text" id="formLocation" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="Remote / San Francisco">
-          </div>
+          </label>
+          <label class="pill-select"><span class="sr-only">Pay</span>
+            <select id="filterPay">
+              <option value="">Pay</option>
+              <option value="with">Salary listed</option>
+              <option value="without">No salary listed</option>
+            </select>
+          </label>
+          <label class="pill-select"><span class="sr-only">Resume</span>
+            <select id="filterResume">
+              <option value="">Resume</option>
+              <option value="with">Resume attached</option>
+              <option value="without">No resume</option>
+            </select>
+          </label>
+          <label class="pill-select"><span class="sr-only">Interviews</span>
+            <select id="filterInterview">
+              <option value="">Interviews</option>
+              <option value="upcoming">Upcoming interview</option>
+              <option value="any">Has interviews</option>
+              <option value="none">No interviews</option>
+            </select>
+          </label>
+          <button type="button" class="link clear-filters" id="clearFilters" hidden>Clear filters</button>
+        </div>
+      </section>
+
+      <div class="page">
+        <div class="myjobs-head">
+          <h1>My jobs</h1>
+          <p class="insights" id="insights"></p>
+        </div>
+        <nav class="status-tabs" id="statusTabs" aria-label="Filter by stage"></nav>
+
+        <div class="jobs-layout" id="jobsLayout">
+          <section class="jobs-list-col" aria-label="Job list">
+            <div class="results-bar">
+              <span id="resultCount" class="muted"></span>
+              <span class="sort-links" id="sortLinks">Sort by:
+                <button type="button" class="sort-link" data-sort="recent" aria-pressed="true">date</button> -
+                <button type="button" class="sort-link" data-sort="salary">pay</button> -
+                <button type="button" class="sort-link" data-sort="company">company</button>
+              </span>
+            </div>
+            <ul class="job-list" id="jobList"></ul>
+          </section>
+
+          <aside class="detail-pane" id="detailPane" aria-label="Job details">
+            <div class="dp-placeholder" id="detailPlaceholder">
+              <svg class="icon icon--xl"><use href="#i-briefcase"/></svg>
+              <p>Select a job to see its details, interviews and activity.</p>
+            </div>
+            <article class="dp" id="detailContent" hidden>
+              <header class="dp-head">
+                <button type="button" class="link dp-back" id="detailBack"><svg class="icon icon--sm"><use href="#i-arrow-left"/></svg>Back to jobs</button>
+                <div class="dp-title-row">
+                  <span class="logo logo--lg" id="detailLogo"></span>
+                  <div class="dp-title-text">
+                    <h2 id="detailTitle">—</h2>
+                    <div class="dp-company" id="detailCompany"></div>
+                    <div class="dp-sub" id="detailLocation"></div>
+                    <div class="dp-sub dp-salary" id="detailSalary"></div>
+                  </div>
+                </div>
+                <div class="dp-actions">
+                  <a class="btn btn--primary btn--lg" id="detailApply" target="_blank" rel="noopener noreferrer" hidden>View job posting<svg class="icon icon--sm"><use href="#i-external"/></svg></a>
+                  <label class="status-picker">
+                    <span class="sr-only">Status</span>
+                    <select id="detailStatus"></select>
+                  </label>
+                  <button type="button" class="icon-btn icon-btn--outline" id="detailEdit" title="Edit job" aria-label="Edit job"><svg class="icon"><use href="#i-edit"/></svg></button>
+                  <button type="button" class="icon-btn icon-btn--outline icon-btn--danger" id="detailDelete" title="Delete job" aria-label="Delete job"><svg class="icon"><use href="#i-trash"/></svg></button>
+                </div>
+              </header>
+
+              <div class="dp-body">
+                <section class="dp-section">
+                  <h3>Job details</h3>
+                  <div class="detail-rows" id="detailFacts"></div>
+                </section>
+
+                <section class="dp-section">
+                  <div class="section-head">
+                    <h3>Interviews</h3>
+                    <button type="button" class="btn btn--outline btn--sm" id="addInterviewBtn"><svg class="icon"><use href="#i-plus"/></svg>Add round</button>
+                  </div>
+                  <ul class="interview-list" id="detailInterviews"></ul>
+                </section>
+
+                <section class="dp-section">
+                  <h3>Resume</h3>
+                  <div id="detailResume"></div>
+                </section>
+
+                <section class="dp-section" id="detailNotesSection">
+                  <h3>Notes</h3>
+                  <div id="detailNotes" class="notes"></div>
+                </section>
+
+                <section class="dp-section">
+                  <h3>Activity</h3>
+                  <ol class="timeline" id="detailHistory"></ol>
+                </section>
+              </div>
+            </article>
+          </aside>
         </div>
 
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Salary Min</label>
-            <input type="number" id="formSalaryMin" min="0" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="160000">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Salary Max</label>
-            <input type="number" id="formSalaryMax" min="0" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="210000">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Currency</label>
-            <input type="text" id="formCurrency" value="USD" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono">
-          </div>
+        <div class="empty-state" id="emptyState" hidden>
+          <div class="empty-illustration"><svg class="icon icon--xl"><use href="#i-briefcase"/></svg></div>
+          <h2>No jobs yet</h2>
+          <p>Add the jobs you've applied for and follow each one from application to offer.</p>
+          <button type="button" class="btn btn--primary btn--lg" data-action="new-application"><svg class="icon"><use href="#i-plus"/></svg>Add your first job</button>
         </div>
+      </div>
+    </main>
 
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Job Listing URL</label>
-          <input type="url" id="formJobUrl" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600 font-mono" placeholder="https://careers.stripe.com/jobs/...">
+    <!-- ===== PIPELINE ===== -->
+    <main class="view" id="pipelineView" aria-label="Pipeline" hidden>
+      <div class="page page--wide">
+        <div class="page-head">
+          <div>
+            <h1>Pipeline</h1>
+            <p class="muted">Drag a job to another stage to update its status.</p>
+          </div>
         </div>
+        <div class="board" id="board"></div>
+      </div>
+    </main>
 
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Internal Notes &amp; Strategy</label>
-          <textarea id="formNotes" rows="2" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="Referral by team director, target compensation, recruiter contact..."></textarea>
+    <!-- ===== INTERVIEWS ===== -->
+    <main class="view" id="interviewsView" aria-label="Interviews" hidden>
+      <div class="page page--narrow">
+        <div class="page-head">
+          <div>
+            <h1>Interviews</h1>
+            <p class="muted">Every interview round across your applications.</p>
+          </div>
         </div>
+        <section class="card">
+          <header class="card-head"><h2>Upcoming</h2></header>
+          <ul class="interview-list interview-list--padded" id="upcomingList"></ul>
+        </section>
+        <section class="card">
+          <header class="card-head"><h2>Past &amp; completed</h2></header>
+          <ul class="interview-list interview-list--padded" id="pastList"></ul>
+        </section>
+      </div>
+    </main>
 
-        <div class="pt-4 border-t border-slate-800 flex items-center justify-end space-x-2">
-          <button type="button" onclick="closeAppModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg transition">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md shadow-indigo-600/30 transition">Save Application</button>
-        </div>
-      </form>
-    </div>
+    <footer class="site-footer">
+      <span>© <span class="year"></span> Job Tracker</span>
+      <a href="/api-docs/" target="_blank" rel="noopener">API docs</a>
+      <span class="health" id="healthBadge" data-state="unknown" title="Server status"><span class="dot"></span><span class="health-label">Checking status…</span></span>
+    </footer>
   </div>
 
-  <!-- Schedule Interview Modal -->
-  <div id="interviewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-sm text-white">Schedule Interview Round</h3>
-        <button onclick="closeInterviewModal()" class="text-slate-400 hover:text-white p-1">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+  <!-- ============================== DIALOGS ============================== -->
+
+  <!-- Application form -->
+  <dialog id="appDialog" class="dialog" aria-labelledby="appDialogTitle">
+    <form id="appForm" class="dialog-body form" novalidate>
+      <header class="dialog-head">
+        <h2 id="appDialogTitle">Add a job</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      </header>
+      <div class="dialog-content">
+        <input type="hidden" id="appId">
+        <div class="field"><label for="appRole">Job title <span class="req">*</span></label><input id="appRole" required maxlength="200" placeholder="e.g. Backend Engineer"></div>
+        <div class="field"><label for="appCompany">Company <span class="req">*</span></label><input id="appCompany" required maxlength="200" placeholder="e.g. Acme Corp"></div>
+        <div class="field"><label for="appLocation">Location</label><input id="appLocation" maxlength="200" placeholder='e.g. Bengaluru, or "Remote"'></div>
+        <div class="grid-2">
+          <div class="field"><label for="appStatus">Status</label><select id="appStatus"></select></div>
+          <div class="field"><label for="appDate">Date applied</label><input id="appDate" type="date"></div>
+        </div>
+        <div class="field" id="statusNoteField" hidden>
+          <label for="appStatusNote">Note for this status change <span class="muted">(optional)</span></label>
+          <input id="appStatusNote" maxlength="500" placeholder="e.g. Recruiter called to schedule onsite">
+        </div>
+        <fieldset class="fieldset">
+          <legend>Pay <span class="muted">(per year)</span></legend>
+          <div class="grid-3">
+            <div class="field"><label for="appSalaryMin">Minimum</label><input id="appSalaryMin" type="number" min="0" step="1" inputmode="numeric"></div>
+            <div class="field"><label for="appSalaryMax">Maximum</label><input id="appSalaryMax" type="number" min="0" step="1" inputmode="numeric"></div>
+            <div class="field"><label for="appCurrency">Currency</label>
+              <select id="appCurrency">
+                <option>USD</option><option>INR</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option><option>SGD</option><option>AED</option><option>JPY</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+        <div class="field"><label for="appUrl">Job posting link</label><input id="appUrl" type="url" placeholder="https://…"></div>
+        <div class="field"><label for="appNotes">Notes</label><textarea id="appNotes" rows="4" maxlength="5000" placeholder="Referral, recruiter contact, what the role involves…"></textarea></div>
+        <div class="alert alert--error" id="appError" role="alert" hidden></div>
       </div>
-      <form id="interviewForm" onsubmit="handleInterviewSubmit(event)" class="p-6 space-y-4">
+      <footer class="dialog-foot">
+        <button type="button" class="btn btn--ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn--primary" id="appSubmit">Save job</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Interview form -->
+  <dialog id="interviewDialog" class="dialog" aria-labelledby="interviewDialogTitle">
+    <form id="interviewForm" class="dialog-body form" novalidate>
+      <header class="dialog-head">
+        <h2 id="interviewDialogTitle">Add interview round</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      </header>
+      <div class="dialog-content">
+        <input type="hidden" id="intId">
         <input type="hidden" id="intAppId">
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Round Name *</label>
-          <input type="text" id="intRoundName" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="System Architecture / Hiring Manager Screen">
+        <div class="field"><label for="intRound">Round name <span class="req">*</span></label><input id="intRound" required maxlength="200" placeholder="e.g. Technical screen, Hiring manager"></div>
+        <div class="grid-2">
+          <div class="field"><label for="intDate">Date &amp; time <span class="req">*</span></label><input id="intDate" type="datetime-local" required></div>
+          <div class="field"><label for="intStatus">Status</label>
+            <select id="intStatus"><option>Scheduled</option><option>Completed</option><option>Cancelled</option></select>
+          </div>
         </div>
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Scheduled Date &amp; Time *</label>
-          <input type="datetime-local" id="intScheduledDate" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Meeting Link</label>
-          <input type="url" id="intMeetingLink" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono placeholder-slate-600" placeholder="https://meet.google.com/abc-defg-hij">
-        </div>
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Interviewer Name / Title</label>
-          <input type="text" id="intInterviewer" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="e.g. Jordan (VP of Engineering)">
-        </div>
-        <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Prep Notes</label>
-          <textarea id="intNotes" rows="2" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-slate-600" placeholder="Focus points, distributed systems, Kafka, past achievements..."></textarea>
-        </div>
-        <div class="pt-4 border-t border-slate-800 flex items-center justify-end space-x-2">
-          <button type="button" onclick="closeInterviewModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg transition">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition">Confirm Round</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Document / Resume Upload Modal -->
-  <div id="resumeModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-sm text-white">Attach Candidate Resume</h3>
-        <button onclick="closeResumeModal()" class="text-slate-400 hover:text-white p-1">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        <div class="field"><label for="intInterviewer">Interviewer</label><input id="intInterviewer" maxlength="200" placeholder="Name and title"></div>
+        <div class="field"><label for="intLink">Meeting link</label><input id="intLink" type="url" placeholder="https://meet.google.com/…"></div>
+        <div class="field"><label for="intNotes">Prep notes &amp; feedback</label><textarea id="intNotes" rows="4" maxlength="5000"></textarea></div>
+        <div class="alert alert--error" id="intError" role="alert" hidden></div>
       </div>
-      <form id="resumeForm" onsubmit="handleResumeUpload(event)" class="p-6 space-y-4">
-        <input type="hidden" id="resAppId">
-        <div class="border-2 border-dashed border-slate-800 hover:border-indigo-500/80 rounded-xl p-6 text-center transition cursor-pointer bg-slate-950/40">
-          <input type="file" id="resFileInput" accept=".pdf,.doc,.docx" required class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/20 file:text-indigo-400 hover:file:bg-indigo-600/30">
-          <p class="text-[11px] text-slate-500 mt-2">PDF, DOC, or DOCX up to 5MB</p>
-        </div>
-        <div id="resUploadStatus" class="text-xs text-center font-medium hidden"></div>
-        <div class="flex items-center justify-end space-x-2 pt-2">
-          <button type="button" onclick="closeResumeModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white transition">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition">Upload Resume</button>
-        </div>
-      </form>
-    </div>
-  </div>
+      <footer class="dialog-foot">
+        <button type="button" class="btn btn--ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn--primary" id="intSubmit">Save round</button>
+      </footer>
+    </form>
+  </dialog>
 
-  <!-- Status History Modal -->
-  <div id="historyModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-sm text-white">Status Transition Audit Trail</h3>
-        <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white p-1">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-      <div class="p-6">
-        <div id="historyTimeline" class="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar"></div>
+  <!-- Profile & settings -->
+  <dialog id="profileDialog" class="dialog dialog--wide" aria-labelledby="profileDialogTitle">
+    <div class="dialog-body">
+      <header class="dialog-head">
+        <h2 id="profileDialogTitle">Profile &amp; settings</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      </header>
+      <div class="dialog-content stack-lg">
+        <form id="profileForm" class="form settings-block" novalidate>
+          <h3>Profile</h3>
+          <div class="field"><label for="profileEmail">Email</label><input id="profileEmail" type="email" disabled></div>
+          <div class="field"><label for="profileName">Full name</label><input id="profileName" maxlength="100" autocomplete="name"></div>
+          <div class="grid-2">
+            <div class="field"><label for="profileLinkedin">LinkedIn URL</label><input id="profileLinkedin" type="url" placeholder="https://linkedin.com/in/…"></div>
+            <div class="field"><label for="profileGithub">GitHub URL</label><input id="profileGithub" type="url" placeholder="https://github.com/…"></div>
+          </div>
+          <div class="alert alert--error" id="profileError" role="alert" hidden></div>
+          <div class="form-actions"><button type="submit" class="btn btn--primary">Save profile</button></div>
+        </form>
+
+        <form id="passwordForm" class="form settings-block" novalidate>
+          <h3>Change password</h3>
+          <input type="text" autocomplete="username" hidden aria-hidden="true" id="pwUsername">
+          <div class="grid-2">
+            <div class="field"><label for="pwCurrent">Current password</label><input id="pwCurrent" type="password" autocomplete="current-password" required></div>
+            <div class="field"><label for="pwNew">New password</label><input id="pwNew" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"></div>
+          </div>
+          <div class="alert alert--error" id="passwordError" role="alert" hidden></div>
+          <div class="form-actions"><button type="submit" class="btn btn--outline">Update password</button></div>
+        </form>
+
+        <section class="settings-block settings-block--danger">
+          <h3>Delete account</h3>
+          <p class="muted">Permanently delete your account, all jobs, interviews and uploaded resumes. This cannot be undone.</p>
+          <div class="form-actions"><button type="button" class="btn btn--danger" id="deleteAccountBtn">Delete my account</button></div>
+        </section>
       </div>
     </div>
-  </div>
+  </dialog>
 
-  <!-- Toast Notification Bar -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition duration-300 pointer-events-none px-4 py-3 rounded-xl shadow-xl flex items-center text-xs font-semibold">
-    <span id="toastText">System message</span>
-  </div>
-
-  <!-- JavaScript Client Core -->
-  <script>
-    let token = localStorage.getItem('token');
-    let currentUser = null;
-    let applicationsCache = [];
-    let isSignupMode = false;
-
-    // Company logo color mapper based on company initial
-    const companyColors = [
-      'from-blue-600 to-indigo-600',
-      'from-violet-600 to-purple-600',
-      'from-emerald-600 to-teal-600',
-      'from-amber-600 to-orange-600',
-      'from-rose-600 to-pink-600',
-      'from-cyan-600 to-blue-600',
-    ];
-
-    function getCompanyGradient(name) {
-      const code = (name || 'A').charCodeAt(0);
-      return companyColors[code % companyColors.length];
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      if (token) {
-        bootstrapAuthenticatedState();
-      } else {
-        renderUnauthenticatedState();
-      }
-    });
-
-    function showToast(msg, isError = false) {
-      const toast = document.getElementById('toast');
-      const text = document.getElementById('toastText');
-      text.innerText = msg;
-      toast.className = `fixed bottom-6 right-6 z-50 transition duration-300 px-4 py-3 rounded-xl shadow-2xl flex items-center text-xs font-semibold ${isError ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-100 border border-slate-700'} opacity-100 translate-y-0`;
-      setTimeout(() => {
-        toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 transition duration-300 pointer-events-none px-4 py-3 rounded-xl shadow-xl flex items-center text-xs font-semibold';
-      }, 3500);
-    }
-
-    function switchAuthMode(mode) {
-      isSignupMode = mode === 'signup';
-      const tabLogin = document.getElementById('authTabLogin');
-      const tabSignup = document.getElementById('authTabSignup');
-      const submitBtn = document.getElementById('authSubmitBtn');
-
-      if (isSignupMode) {
-        tabSignup.className = 'py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition';
-        tabLogin.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition';
-        submitBtn.innerText = 'Create Account & Enter';
-      } else {
-        tabLogin.className = 'py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition';
-        tabSignup.className = 'py-2.5 rounded-lg text-slate-400 hover:text-white transition';
-        submitBtn.innerText = 'Sign In to Workspace';
-      }
-      document.getElementById('authAlert').classList.add('hidden');
-    }
-
-    function autofillDemoCredentials() {
-      document.getElementById('authEmail').value = 'demo@jobtracker.dev';
-      document.getElementById('authPassword').value = 'DemoPassword123';
-      switchAuthMode('login');
-    }
-
-    async function handleAuthSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPassword').value;
-      const alertBox = document.getElementById('authAlert');
-      alertBox.classList.add('hidden');
-
-      const endpoint = isSignupMode ? '/auth/signup' : '/auth/login';
-
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Authentication error');
-
-        if (isSignupMode) {
-          showToast('Account registered! Logging in...');
-          const loginRes = await fetch('/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-          });
-          const loginData = await loginRes.json();
-          token = loginData.token;
-        } else {
-          token = data.token;
-        }
-
-        localStorage.setItem('token', token);
-        bootstrapAuthenticatedState();
-      } catch (err) {
-        alertBox.innerText = err.message;
-        alertBox.classList.remove('hidden');
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('token');
-      token = null;
-      currentUser = null;
-      applicationsCache = [];
-      renderUnauthenticatedState();
-      showToast('Logged out of workspace');
-    }
-
-    function renderUnauthenticatedState() {
-      document.getElementById('authScreen').classList.remove('hidden');
-      document.getElementById('appShell').classList.add('hidden');
-    }
-
-    async function bootstrapAuthenticatedState() {
-      try {
-        const profileRes = await fetch('/auth/profile', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (profileRes.status === 401) {
-          logout();
-          return;
-        }
-
-        currentUser = await profileRes.json();
-        document.getElementById('authScreen').classList.add('hidden');
-        document.getElementById('appShell').classList.remove('hidden');
-
-        // Render user identifiers
-        const initial = (currentUser.name || currentUser.email || 'U').substring(0, 2).toUpperCase();
-        document.getElementById('userAvatar').innerText = initial;
-        document.getElementById('userNameDisplay').innerText = currentUser.name || 'Candidate';
-        document.getElementById('userEmailDisplay').innerText = currentUser.email;
-
-        // Fetch metrics and records
-        loadWorkspaceData();
-      } catch (err) {
-        console.error('Bootstrap error:', err);
-      }
-    }
-
-    async function loadWorkspaceData() {
-      try {
-        const [statsRes, appsRes] = await Promise.all([
-          fetch('/applications/stats', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/applications?limit=100', { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
-
-        if (statsRes.ok) {
-          const stats = await statsRes.json();
-          document.getElementById('metricTotal').innerText = stats.totalApplications || 0;
-          document.getElementById('metricActive').innerText = stats.activeApplications || 0;
-          document.getElementById('metricInterviewRate').innerText = stats.interviewRate || '0%';
-          document.getElementById('metricOfferRate').innerText = stats.offerRate || '0%';
-        }
-
-        if (appsRes.ok) {
-          const appsData = await appsRes.json();
-          applicationsCache = appsData.applications || [];
-          renderKanban(applicationsCache);
-        }
-      } catch (err) {
-        console.error('Workspace data load error:', err);
-      }
-    }
-
-    function renderKanban(applications) {
-      const columns = {
-        Applied: document.getElementById('colCards-Applied'),
-        Interviewing: document.getElementById('colCards-Interviewing'),
-        Offered: document.getElementById('colCards-Offered'),
-        Rejected: document.getElementById('colCards-Rejected'),
-      };
-
-      const counts = { Applied: 0, Interviewing: 0, Offered: 0, Rejected: 0 };
-      Object.values(columns).forEach(col => col.innerHTML = '');
-
-      applications.forEach(app => {
-        let col = app.status;
-        if (app.status === 'Accepted') col = 'Offered';
-        if (app.status === 'Withdrawn') col = 'Rejected';
-        if (!columns[col]) col = 'Applied';
-
-        counts[col]++;
-
-        const card = document.createElement('div');
-        card.className = 'group p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 shadow-md hover:shadow-xl transition space-y-3';
-        
-        const gradient = getCompanyGradient(app.company);
-        const compInitial = (app.company || 'C').charAt(0).toUpperCase();
-
-        card.innerHTML = `
-          <!-- Card Top: Company Avatar, Name, and Status Badge -->
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-8 h-8 rounded-lg bg-gradient-to-tr ${gradient} text-white font-bold text-xs flex items-center justify-center shadow-sm">
-                ${compInitial}
-              </div>
-              <div>
-                <h4 class="font-bold text-slate-100 text-xs tracking-tight group-hover:text-indigo-400 transition">${escapeHtml(app.company)}</h4>
-                <p class="text-[11px] text-slate-400 font-medium">${escapeHtml(app.role)}</p>
-              </div>
-            </div>
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${getStatusPillClass(app.status)}">
-              ${app.status}
-            </span>
+  <!-- Confirm dialog -->
+  <dialog id="confirmDialog" class="dialog dialog--sm" aria-labelledby="confirmTitle">
+    <form method="dialog" class="dialog-body">
+      <div class="dialog-content confirm">
+        <span class="confirm-icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+        <div>
+          <h2 id="confirmTitle">Are you sure?</h2>
+          <p id="confirmMessage" class="muted"></p>
+          <div class="field" id="confirmInputField" hidden>
+            <label for="confirmInput" id="confirmInputLabel"></label>
+            <input id="confirmInput" autocomplete="off">
           </div>
+        </div>
+      </div>
+      <footer class="dialog-foot">
+        <button value="cancel" class="btn btn--ghost" id="confirmCancel">Cancel</button>
+        <button value="ok" class="btn btn--danger" id="confirmOk">Delete</button>
+      </footer>
+    </form>
+  </dialog>
 
-          <!-- Metadata Tags -->
-          <div class="flex flex-wrap gap-1.5 text-[11px]">
-            ${app.salaryMin || app.salaryMax ? `
-              <span class="mono px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800/80">
-                ${app.salaryMin ? `${app.currency || '$'}${app.salaryMin.toLocaleString()}` : ''}
-                ${app.salaryMin && app.salaryMax ? ' - ' : ''}
-                ${app.salaryMax ? `${app.currency || '$'}${app.salaryMax.toLocaleString()}` : ''}
-              </span>
-            ` : ''}
+  <input type="file" id="resumeInput" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
 
-            ${app.jobLocation ? `
-              <span class="px-2 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800/80 flex items-center">
-                <svg class="w-3 h-3 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                ${escapeHtml(app.jobLocation)}
-              </span>
-            ` : ''}
-          </div>
-
-          <!-- Quick Move Dropdown / Actions -->
-          <div class="pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-slate-500 text-[11px]">
-            <span class="mono text-[10px] text-slate-500">${new Date(app.appliedDate).toLocaleDateString()}</span>
-            
-            <div class="flex items-center space-x-1">
-              ${app.resumeOriginalName ? `
-                <a href="/applications/${app.id}/resume" target="_blank" title="Download Resume (${escapeHtml(app.resumeOriginalName)})" class="p-1 rounded hover:bg-slate-800 text-indigo-400 hover:text-indigo-300">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </a>
-              ` : `
-                <button onclick="openResumeModal(${app.id})" title="Attach Resume" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-indigo-400">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                </button>
-              `}
-              <button onclick="openInterviewModal(${app.id})" title="Schedule Interview Round" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-amber-400">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              </button>
-              <button onclick="viewHistory(${app.id})" title="Status History Audit" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              </button>
-              <button onclick="openEditModal(${app.id})" title="Edit Details" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-indigo-400">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-              </button>
-              <button onclick="deleteApplication(${app.id})" title="Delete" class="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-rose-400">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-              </button>
-            </div>
-          </div>
-        `;
-        columns[col].appendChild(card);
-      });
-
-      document.getElementById('colCount-Applied').innerText = counts.Applied;
-      document.getElementById('colCount-Interviewing').innerText = counts.Interviewing;
-      document.getElementById('colCount-Offered').innerText = counts.Offered;
-      document.getElementById('colCount-Rejected').innerText = counts.Rejected;
-    }
-
-    function getStatusPillClass(status) {
-      switch (status) {
-        case 'Applied': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-        case 'Interviewing': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-        case 'Offered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-        case 'Accepted': return 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
-        case 'Rejected': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-        case 'Withdrawn': return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
-        default: return 'bg-slate-500/10 text-slate-400';
-      }
-    }
-
-    function applyFilters() {
-      const search = document.getElementById('filterSearch').value.toLowerCase();
-      const status = document.getElementById('filterStatus').value;
-
-      const filtered = applicationsCache.filter(app => {
-        const matchesSearch = app.company.toLowerCase().includes(search) || 
-                              app.role.toLowerCase().includes(search) || 
-                              (app.jobLocation && app.jobLocation.toLowerCase().includes(search));
-        const matchesStatus = status === 'ALL' || app.status === status;
-        return matchesSearch && matchesStatus;
-      });
-
-      renderKanban(filtered);
-    }
-
-    function openCreateModal() {
-      document.getElementById('formAppId').value = '';
-      document.getElementById('appModalTitle').innerText = 'Create New Application';
-      document.getElementById('formCompany').value = '';
-      document.getElementById('formRole').value = '';
-      document.getElementById('formStatus').value = 'Applied';
-      document.getElementById('formLocation').value = '';
-      document.getElementById('formSalaryMin').value = '';
-      document.getElementById('formSalaryMax').value = '';
-      document.getElementById('formCurrency').value = 'USD';
-      document.getElementById('formJobUrl').value = '';
-      document.getElementById('formNotes').value = '';
-      document.getElementById('appModal').classList.remove('hidden');
-    }
-
-    function openEditModal(id) {
-      const app = applicationsCache.find(a => a.id === id);
-      if (!app) return;
-      document.getElementById('formAppId').value = app.id;
-      document.getElementById('appModalTitle').innerText = 'Edit Application Record';
-      document.getElementById('formCompany').value = app.company || '';
-      document.getElementById('formRole').value = app.role || '';
-      document.getElementById('formStatus').value = app.status || 'Applied';
-      document.getElementById('formLocation').value = app.jobLocation || '';
-      document.getElementById('formSalaryMin').value = app.salaryMin || '';
-      document.getElementById('formSalaryMax').value = app.salaryMax || '';
-      document.getElementById('formCurrency').value = app.currency || 'USD';
-      document.getElementById('formJobUrl').value = app.jobPostUrl || '';
-      document.getElementById('formNotes').value = app.notes || '';
-      document.getElementById('appModal').classList.remove('hidden');
-    }
-
-    function closeAppModal() {
-      document.getElementById('appModal').classList.add('hidden');
-    }
-
-    async function handleAppSubmit(e) {
-      e.preventDefault();
-      const appId = document.getElementById('formAppId').value;
-      const payload = {
-        company: document.getElementById('formCompany').value.trim(),
-        role: document.getElementById('formRole').value.trim(),
-        status: document.getElementById('formStatus').value,
-        jobLocation: document.getElementById('formLocation').value.trim() || undefined,
-        salaryMin: document.getElementById('formSalaryMin').value ? Number(document.getElementById('formSalaryMin').value) : undefined,
-        salaryMax: document.getElementById('formSalaryMax').value ? Number(document.getElementById('formSalaryMax').value) : undefined,
-        currency: document.getElementById('formCurrency').value.trim() || 'USD',
-        jobPostUrl: document.getElementById('formJobUrl').value.trim() || undefined,
-        notes: document.getElementById('formNotes').value.trim() || undefined,
-      };
-
-      const method = appId ? 'PATCH' : 'POST';
-      const endpoint = appId ? `/applications/${appId}` : '/applications';
-
-      try {
-        const res = await fetch(endpoint, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to save application');
-
-        closeAppModal();
-        showToast(appId ? 'Application updated' : 'Application recorded');
-        loadWorkspaceData();
-      } catch (err) {
-        showToast(err.message, true);
-      }
-    }
-
-    async function deleteApplication(id) {
-      if (!confirm('Are you sure you want to permanently delete this application?')) return;
-      try {
-        const res = await fetch(`/applications/${id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error('Deletion failed');
-        showToast('Application deleted');
-        loadWorkspaceData();
-      } catch (err) {
-        showToast(err.message, true);
-      }
-    }
-
-    function openInterviewModal(appId) {
-      document.getElementById('intAppId').value = appId;
-      document.getElementById('intRoundName').value = '';
-      document.getElementById('intScheduledDate').value = '';
-      document.getElementById('intMeetingLink').value = '';
-      document.getElementById('intInterviewer').value = '';
-      document.getElementById('intNotes').value = '';
-      document.getElementById('interviewModal').classList.remove('hidden');
-    }
-
-    function closeInterviewModal() {
-      document.getElementById('interviewModal').classList.add('hidden');
-    }
-
-    async function handleInterviewSubmit(e) {
-      e.preventDefault();
-      const appId = document.getElementById('intAppId').value;
-      const payload = {
-        roundName: document.getElementById('intRoundName').value.trim(),
-        scheduledDate: new Date(document.getElementById('intScheduledDate').value).toISOString(),
-        meetingLink: document.getElementById('intMeetingLink').value.trim() || undefined,
-        interviewer: document.getElementById('intInterviewer').value.trim() || undefined,
-        feedbackNotes: document.getElementById('intNotes').value.trim() || undefined,
-      };
-
-      try {
-        const res = await fetch(`/applications/${appId}/interviews`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to schedule round');
-
-        closeInterviewModal();
-        showToast('Interview round recorded');
-      } catch (err) {
-        showToast(err.message, true);
-      }
-    }
-
-    function openResumeModal(appId) {
-      document.getElementById('resAppId').value = appId;
-      document.getElementById('resFileInput').value = '';
-      document.getElementById('resUploadStatus').classList.add('hidden');
-      document.getElementById('resumeModal').classList.remove('hidden');
-    }
-
-    function closeResumeModal() {
-      document.getElementById('resumeModal').classList.add('hidden');
-    }
-
-    async function handleResumeUpload(e) {
-      e.preventDefault();
-      const appId = document.getElementById('resAppId').value;
-      const fileInput = document.getElementById('resFileInput');
-      if (!fileInput.files.length) return;
-
-      const formData = new FormData();
-      formData.append('resume', fileInput.files[0]);
-
-      const statusBox = document.getElementById('resUploadStatus');
-      statusBox.innerText = 'Uploading document...';
-      statusBox.className = 'text-xs text-center font-medium text-slate-400';
-      statusBox.classList.remove('hidden');
-
-      try {
-        const res = await fetch(`/applications/${appId}/resume`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload failed');
-
-        closeResumeModal();
-        showToast('Resume attached to application');
-        loadWorkspaceData();
-      } catch (err) {
-        statusBox.innerText = err.message;
-        statusBox.className = 'text-xs text-center font-medium text-rose-400';
-      }
-    }
-
-    async function viewHistory(appId) {
-      try {
-        const res = await fetch(`/applications/${appId}/history`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const history = await res.json();
-        const timeline = document.getElementById('historyTimeline');
-        timeline.innerHTML = '';
-
-        if (!history.length) {
-          timeline.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">No audit transitions recorded.</p>';
-        } else {
-          history.forEach(item => {
-            const entry = document.createElement('div');
-            entry.className = 'border-l-2 border-indigo-500 pl-3.5 py-1 space-y-1';
-            entry.innerHTML = `
-              <div class="text-xs font-semibold text-slate-200">
-                ${escapeHtml(item.fromStatus)} &rarr; <span class="text-indigo-400">${escapeHtml(item.toStatus)}</span>
-              </div>
-              <div class="mono text-[10px] text-slate-500">
-                ${new Date(item.changedAt).toLocaleString()}
-              </div>
-              ${item.notes ? `<div class="text-xs text-slate-400">${escapeHtml(item.notes)}</div>` : ''}
-            `;
-            timeline.appendChild(entry);
-          });
-        }
-
-        document.getElementById('historyModal').classList.remove('hidden');
-      } catch (err) {
-        showToast('Failed to load transition audit', true);
-      }
-    }
-
-    function closeHistoryModal() {
-      document.getElementById('historyModal').classList.add('hidden');
-    }
-
-    function downloadCsv() {
-      window.location.href = `/export/csv`;
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-  </script>
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 </body>
 </html>

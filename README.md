@@ -1,179 +1,133 @@
 # Job Application Tracker
 
-A type-safe REST API backend for managing and tracking job applications, built with **Express.js**, **Prisma 8 (Prisma Next)**, **PostgreSQL**, **JWT authentication**, and **TypeScript**.
+Track every job application from first submission to signed offer. A REST API built with **Express 5**, **Prisma Next (Prisma 8)**, **PostgreSQL** and **TypeScript**, with a built-in, dependency-free web dashboard.
+
+![My jobs](docs/screenshots/my-jobs.png)
 
 ## Features
 
-- **Authentication & Security:**
-  - JWT-based authentication with bcrypt password hashing (10 salt rounds).
-  - Defense-in-depth HTTP security headers via **Helmet**.
-  - Cross-Origin Resource Sharing (**CORS**) with configurable origins.
-  - Brute-force protection via **rate limiting** on login and global API endpoints.
-- **User Profiles:**
-  - Retrieve and update user profile information (`name`, `linkedinUrl`, `githubUrl`).
-- **Application Tracking:**
-  - Create, view, update, and delete applications with strict ownership isolation.
-  - Track salary expectations (`salaryMin`, `salaryMax`, `currency`), work location (`jobLocation`), notes, and job posting URLs.
-  - Status management: `Applied`, `Interviewing`, `Offered`, `Rejected`, `Accepted`, `Withdrawn`.
-  - Automated status history audit timeline tracking every transition with timestamps.
-  - Cursor-based pagination and filtering by status and company substring.
-- **Interview Scheduling:**
-  - Schedule interview rounds (`roundName`, `scheduledDate`, `meetingLink`, `interviewer`, `feedbackNotes`, `status`).
-  - Update notes, reschedule dates, and track interview lifecycle (`Scheduled`, `Completed`, `Cancelled`).
-- **Data Export & Admin:**
-  - Streaming RFC 4180 compliant CSV export for application data.
-  - Aggregated administrative metrics.
-- **Interactive Documentation:**
-  - Complete OpenAPI 3.0 specification rendered via Swagger UI at `/api-docs`.
-- **Containerization & CI:**
-  - Production-ready multi-stage `Dockerfile` and `docker-compose.yml` (PostgreSQL 16 + API).
-  - GitHub Actions automated build and typecheck CI pipeline.
+**Dashboard (served at `/`)**, laid out like a job portal
+- **My jobs:** a "what / where" search bar, filter pills (date applied, pay, resume, interviews), stage tabs with counts (All, Applied, Interviewing, Offers, Archived), sort by date, pay or company
+- **Job cards and detail pane:** job cards on the left, with pay chips, status and "Interview in 2 days" tags and a notes snippet. Selecting one opens a sticky pane on the right with job details, a "View job posting" button, status changes, interview rounds, resume upload/download, notes and an activity timeline
+- **Pipeline:** a board with drag-and-drop between the six stages
+- **Interviews:** upcoming and past rounds across all jobs, with one-click "mark completed"
+- **Account:** profile and settings, password change, CSV export, account deletion, sign up, sign in, forgot/reset password
+- **Responsive and themed:** on phones the detail pane becomes a full-screen sheet; light and dark themes
+- **Keyboard shortcuts:** `n` adds a job, `/` focuses search, ↑/↓ moves through the list
+- No CDNs or build step: plain HTML/CSS/ES modules that run under a strict Content-Security-Policy
 
-## Tech Stack
-
-| Layer | Technology |
+| | |
 |---|---|
-| Web Framework | Express.js 5 |
-| Database | PostgreSQL 16+ |
-| ORM | Prisma 8 (Prisma Next) |
-| Auth & Security | JWT, Bcrypt, Helmet, CORS, Express-Rate-Limit |
-| Language | TypeScript 5 |
-| Documentation | Swagger UI Express (OpenAPI 3.0) |
-| Containerization | Docker, Docker Compose |
-| Runtime | Node.js 22+ |
+| ![Pipeline](docs/screenshots/pipeline.png) | ![Dark theme](docs/screenshots/my-jobs-dark.png) |
+| ![Mobile list](docs/screenshots/mobile-list.png) | ![Mobile detail](docs/screenshots/mobile-detail.png) |
 
-## Project Structure
+**API**
+- JWT auth (bcrypt hashing), Helmet security headers with CSP, CORS, rate limiting
+- Applications CRUD with strict per-user ownership checks and automatic status history
+- Cursor pagination, case-insensitive company search, status filter
+- Interview rounds, resume files (PDF/DOC/DOCX up to 5 MB), CSV export, per-user stats
+- OpenAPI 3 docs with Swagger UI at `/api-docs`
 
-```
-.
-├── .github/workflows/ci.yml # Automated CI pipeline
-├── Dockerfile              # Multi-stage production container definition
-├── docker-compose.yml      # Orchestration for PostgreSQL and API
-├── src/
-│   ├── app.ts              # Express configuration, middleware, and route mounting
-│   ├── index.ts            # Server entry point
-│   ├── docs/
-│   │   └── swagger.ts      # OpenAPI 3.0 specification & Swagger UI
-│   ├── middleware/
-│   │   ├── auth.ts         # JWT verification middleware
-│   │   ├── rate-limiter.ts # Strict auth and general rate limiters
-│   │   └── validate.ts     # Request payload validators
-│   ├── prisma/
-│   │   ├── db.ts           # Prisma 8 database client singleton
-│   │   ├── contract.prisma # Data contract source
-│   │   ├── contract.json   # Emitted contract metadata
-│   │   └── contract.d.ts   # Generated TypeScript types
-│   ├── routes/
-│   │   ├── auth.ts         # /auth (signup, login, profile)
-│   │   ├── applications.ts # /applications (CRUD, history, interviews)
-│   │   ├── interviews.ts   # /interviews (CRUD by ID)
-│   │   ├── admin.ts        # /admin/stats
-│   │   └── export.ts       # /export/csv
-│   └── types/
-│       ├── express.d.ts    # Request augmentation (req.user)
-│       └── prisma.d.ts     # Prisma runtime declaration
-└── tests/
-    └── applications.test.ts # Test suite
-```
+## Quick start
 
-## Getting Started
-
-### Option A: Docker Compose (Fastest)
-
-Run both the PostgreSQL database and the API with a single command:
+### Option A: Docker Compose
 
 ```bash
 docker compose up --build
 ```
 
-- API server: `http://localhost:3000`
-- Interactive API docs: `http://localhost:3000/api-docs`
-- PostgreSQL: `localhost:5432`
+Open http://localhost:3000. The `migrate` service creates the tables before the API starts. Set `JWT_SECRET` (32+ characters) in your shell or a `.env` file before deploying anywhere public.
 
-### Option B: Local Setup
+### Option B: Local
 
-#### Prerequisites
-- Node.js 22+
-- PostgreSQL 15+
+Prerequisites: **Node.js 22+** and **PostgreSQL 15+**.
 
-#### 1. Clone and Install
 ```bash
-git clone https://github.com/keerthivasank04/job-application-tracker.git
-cd job-application-tracker
 npm install
+cp .env.example .env          # then edit DATABASE_URL and JWT_SECRET
+npm run db:init               # create tables (safe to re-run)
+npm run seed                  # optional: demo account demo@jobtracker.dev / DemoPassword123
+npm run dev                   # http://localhost:3000
 ```
 
-#### 2. Configure Environment Variables
-Create a `.env` file in the root directory:
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/jobtracker"
-JWT_SECRET="your-long-random-secret-key-here"
-PORT=3000
-ALLOWED_ORIGIN="*"
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start with auto-reload |
+| `npm start` | Start the server |
+| `npm run typecheck` | TypeScript type check (`build` is an alias) |
+| `npm test` | API integration tests (needs `DATABASE_URL` pointing at a database initialised with `db:init`) |
+| `npm run test:e2e` | Browser test of the dashboard (server running; `npm i --no-save playwright && npx playwright install chromium` first) |
+| `npm run db:init` | Create or update database tables from the contract |
+| `npm run contract:emit` | Regenerate `src/prisma/contract.json` / `contract.d.ts` after editing `contract.prisma` |
+| `npm run seed` | Insert the demo account and sample data |
+
+## Configuration
+
+See [`.env.example`](.env.example) for every variable. The important ones:
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Token signing secret (32+ chars enforced in production) |
+| `JWT_EXPIRES_IN` | No | Session length, default `2h` |
+| `PORT` | No | Default `3001` (the example `.env` uses `3000`) |
+| `ALLOWED_ORIGIN` | No | CORS origin, default `*` |
+| `ADMIN_EMAILS` | No | Comma-separated emails allowed to call `GET /admin/stats` |
+| `API_RATE_LIMIT` / `AUTH_RATE_LIMIT` | No | Requests per 15 min per IP (defaults 1000 / 10 failed attempts) |
+| `TRUST_PROXY` | No | Set behind a reverse proxy so rate limiting sees real client IPs |
+
+> **Password reset email:** email delivery is simulated (`src/services/email.ts` logs the message). Outside production, `POST /auth/forgot-password` also returns a `devResetToken` so the reset flow works end-to-end in the dashboard. Hook up a real mail provider in `EmailService.sendPasswordReset` before relying on password reset in production.
+
+## API overview
+
+All endpoints except `/health`, `/api-docs`, signup, login, forgot/reset password require `Authorization: Bearer <token>`. Full schemas are in Swagger UI at `/api-docs`.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Liveness + database check |
+| POST | `/auth/signup` | Register (`email`, `password`, optional `name`) |
+| POST | `/auth/login` | Get a JWT |
+| GET / PATCH / DELETE | `/auth/profile` | Read, update, or delete the account (cascades all data) |
+| POST | `/auth/change-password` | Change password |
+| POST | `/auth/forgot-password` | Request a reset token |
+| POST | `/auth/reset-password` | Reset password with a token |
+| GET / POST | `/applications` | List (`limit`, `cursor`, `status`, `company`) or create |
+| GET | `/applications/stats` | Per-user metrics |
+| GET / PATCH / DELETE | `/applications/:id` | Read, update (`statusNote` annotates status changes), delete |
+| GET | `/applications/:id/history` | Status timeline |
+| GET / POST | `/applications/:id/interviews` | List or add interview rounds |
+| POST / GET / DELETE | `/applications/:id/resume` | Upload (multipart field `resume`), download, remove |
+| GET | `/interviews` | All interviews across applications (`?upcoming=true`) |
+| GET / PATCH / DELETE | `/interviews/:id` | Read, update, delete a round |
+| GET | `/export/csv` | Download all applications as CSV |
+| GET | `/admin/stats` | Cross-user metrics (admins only) |
+
+## Project structure
+
+```
+├── public/                  # Web dashboard (no build step)
+│   ├── index.html           #   markup, dialogs, SVG icon sprite
+│   ├── css/app.css          #   design tokens, light/dark themes, components
+│   └── js/                  #   ES modules: api.js (HTTP client), ui.js (helpers), app.js (screens)
+├── src/
+│   ├── app.ts               # Express app: security, static files, routes, error handling
+│   ├── index.ts             # Server entry point, env validation, graceful shutdown
+│   ├── routes/              # auth, applications, interviews, export, admin
+│   ├── middleware/          # auth (JWT), validate, upload (multer), rate limiting, errors
+│   ├── prisma/              # contract.prisma (schema) + generated contract + db client
+│   ├── utils/serialize.ts   # timestamp normalisation + response sanitising
+│   ├── services/email.ts    # email stub
+│   ├── docs/swagger.ts      # OpenAPI spec
+│   └── scripts/seed.ts      # demo data
+├── tests/                   # node:test API suites + Playwright e2e script
+├── docs/CODEBASE_GUIDE.md   # How the code fits together
+├── Dockerfile / docker-compose.yml
+└── .github/workflows/ci.yml # typecheck + tests against Postgres, Docker build
 ```
 
-#### 3. Initialize Database and Emit Contract
-```bash
-npx prisma contract emit
-npx prisma db init
-```
-
-#### 4. Run Development Server
-```bash
-npm run dev
-```
-
-## API Endpoints
-
-| Method | Endpoint | Auth Required | Description |
-|--------|----------|:---:|---|
-| GET | `/health` | No | Server health check |
-| GET | `/api-docs` | No | Interactive Swagger documentation |
-| POST | `/auth/signup` | No | Register new account |
-| POST | `/auth/login` | No (Rate limited) | Authenticate and obtain JWT token |
-| GET | `/auth/profile` | Yes | Get authenticated user profile |
-| PATCH | `/auth/profile` | Yes | Update profile (`name`, `linkedinUrl`, `githubUrl`) |
-| DELETE | `/auth/profile` | Yes | Delete user account and cascade delete all applications |
-| POST | `/auth/change-password` | Yes | Change account password with current password verification |
-| POST | `/auth/forgot-password` | No (Rate limited) | Request secure 1-hour password reset link/token |
-| POST | `/auth/reset-password` | No (Rate limited) | Reset account password using valid token |
-| GET | `/applications` | Yes | List applications (supports pagination, status, company query) |
-| POST | `/applications` | Yes | Create a new job application |
-| GET | `/applications/stats` | Yes | Get user analytics, status breakdown, and conversion rates |
-| GET | `/applications/:id` | Yes | Get application by ID |
-| PATCH | `/applications/:id` | Yes | Update application (auto-records status changes) |
-| DELETE | `/applications/:id` | Yes | Delete application |
-| POST | `/applications/:id/resume` | Yes | Upload resume file (.pdf, .doc, .docx max 5MB) |
-| GET | `/applications/:id/resume` | Yes | Download attached resume file |
-| DELETE | `/applications/:id/resume` | Yes | Remove attached resume file |
-| GET | `/applications/:id/history` | Yes | Get status transition audit timeline |
-| GET | `/applications/:id/interviews` | Yes | List scheduled interviews for an application |
-| POST | `/applications/:id/interviews` | Yes | Schedule an interview round for an application |
-| GET | `/interviews/:id` | Yes | Get interview details by ID |
-| PATCH | `/interviews/:id` | Yes | Update interview details, notes, or status |
-| DELETE | `/interviews/:id` | Yes | Delete/cancel an interview |
-| GET | `/export/csv` | Yes | Stream all applications as RFC 4180 CSV |
-| GET | `/admin/stats` | Yes | Aggregated system metrics |
-
-## Query Parameters (GET /applications)
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `limit` | integer | 10 | Results per page (max 100) |
-| `cursor` | integer | - | Application ID for cursor-based pagination |
-| `status` | string | - | Filter by status (`Applied`, `Interviewing`, etc.) |
-| `company` | string | - | Case-insensitive company search filter |
-
-## Available Scripts
-
-```bash
-npm run dev           # Start development server with hot reload
-npm run build         # Compile TypeScript code to dist/
-npm start             # Start production server
-npm test              # Run test suite
-npx prisma contract emit  # Emit Prisma 8 contract and type definitions
-npx prisma db init    # Initialize database tables
-```
+For a walkthrough of how requests flow through the system, see [docs/CODEBASE_GUIDE.md](docs/CODEBASE_GUIDE.md).
 
 ## License
 

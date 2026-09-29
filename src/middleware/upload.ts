@@ -6,10 +6,11 @@ import type { Request } from 'express';
 
 const UPLOAD_DIR = path.resolve('uploads', 'resumes');
 
-// Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_DIR)) {
+/** Create the upload directory if it is missing (at startup and before every upload). */
+function ensureUploadDir(): void {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+ensureUploadDir();
 
 // Allowed MIME types and extensions
 const ALLOWED_MIME_TYPES = new Set([
@@ -22,7 +23,13 @@ const ALLOWED_EXTENSIONS = new Set(['.pdf', '.doc', '.docx']);
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, UPLOAD_DIR);
+    // The folder may have been removed while the server was running
+    try {
+      ensureUploadDir();
+      cb(null, UPLOAD_DIR);
+    } catch (err) {
+      cb(err as Error, UPLOAD_DIR);
+    }
   },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();

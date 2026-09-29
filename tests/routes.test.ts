@@ -1,58 +1,39 @@
-import request from 'supertest';
-import app from '../src/app';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { api } from './helpers';
 
-describe('Global Middleware and Routing Tests', () => {
-  describe('Not Found (404) Handler', () => {
-    it('returns structured 404 JSON for undefined routes', async () => {
-      const res = await request(app).get('/undefined-path-for-testing');
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toHaveProperty('error');
-      expect(res.body.error).toContain('/undefined-path-for-testing');
-      expect(res.body.statusCode).toBe(404);
-    });
+describe('Global middleware and routing', () => {
+  it('returns structured 404 JSON for undefined routes', async () => {
+    const res = await api().get('/undefined-path-for-testing');
+    assert.equal(res.status, 404);
+    assert.match(res.body.error, /undefined-path-for-testing/);
+    assert.equal(res.body.statusCode, 404);
   });
 
-  describe('Malformed JSON Handler', () => {
-    it('returns structured 400 when receiving invalid JSON', async () => {
-      const res = await request(app)
-        .post('/auth/login')
-        .set('Content-Type', 'application/json')
-        .send('{ invalid-json-syntax }');
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toHaveProperty('error');
-    });
+  it('returns 400 for malformed JSON bodies', async () => {
+    const res = await api().post('/auth/login').set('Content-Type', 'application/json').send('{ invalid-json }');
+    assert.equal(res.status, 400);
+    assert.ok(res.body.error);
   });
 
-  describe('Authentication Guards on New Endpoints', () => {
-    it('rejects unauthenticated requests to /applications/stats', async () => {
-      const res = await request(app).get('/applications/stats');
-      expect(res.statusCode).toBe(401);
-      expect(res.body.error).toBe('No token provided');
-    });
+  it('serves the frontend with security headers', async () => {
+    const res = await api().get('/');
+    assert.equal(res.status, 200);
+    assert.match(res.text, /<title>Job Tracker<\/title>/);
+    assert.equal(res.headers['x-content-type-options'], 'nosniff');
+    assert.match(res.headers['content-security-policy'], /script-src 'self'/);
+  });
 
-    it('rejects unauthenticated requests to /applications/:id/resume', async () => {
-      const res = await request(app).get('/applications/1/resume');
-      expect(res.statusCode).toBe(401);
-      expect(res.body.error).toBe('No token provided');
+  for (const path of ['/applications', '/applications/stats', '/applications/1/resume', '/applications/1/interviews', '/interviews', '/interviews/1', '/auth/profile', '/export/csv', '/admin/stats']) {
+    it(`rejects unauthenticated GET ${path}`, async () => {
+      const res = await api().get(path);
+      assert.equal(res.status, 401);
+      assert.equal(res.body.error, 'No token provided');
     });
+  }
 
-    it('rejects unauthenticated requests to /applications/:id/interviews', async () => {
-      const res = await request(app).get('/applications/1/interviews');
-      expect(res.statusCode).toBe(401);
-      expect(res.body.error).toBe('No token provided');
-    });
-
-    it('rejects unauthenticated requests to /interviews/:id', async () => {
-      const res = await request(app).get('/interviews/1');
-      expect(res.statusCode).toBe(401);
-      expect(res.body.error).toBe('No token provided');
-    });
-
-    it('rejects unauthenticated requests to /auth/profile', async () => {
-      const res = await request(app).get('/auth/profile');
-      expect(res.statusCode).toBe(401);
-      expect(res.body.error).toBe('No token provided');
-    });
+  it('rejects an invalid token', async () => {
+    const res = await api().get('/auth/profile').set('Authorization', 'Bearer not-a-token');
+    assert.equal(res.status, 401);
   });
 });

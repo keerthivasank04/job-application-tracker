@@ -6,9 +6,9 @@ model User {
   linkedinUrl          String?
   githubUrl            String?
   resetPasswordToken   String?
-  resetPasswordExpires DateTime?
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @default(now())
+  resetPasswordExpires TimestamptzString?
+  createdAt            TimestamptzString        @default(now())
+  updatedAt            TimestamptzString        @default(now())
   applications         Application[]
 }
 
@@ -26,8 +26,8 @@ model Application {
   resumePath         String?
   resumeOriginalName String?
   resumeMimeType     String?
-  resumeUploadedAt   DateTime?
-  appliedDate        DateTime        @default(now())
+  resumeUploadedAt   TimestamptzString?
+  appliedDate        TimestamptzString        @default(now())
   userId             Int
   user               User            @relation(fields: [userId], references: [id])
   statusHistory      StatusHistory[]
@@ -41,7 +41,7 @@ model StatusHistory {
   fromStatus    String
   toStatus      String
   notes         String?
-  changedAt     DateTime    @default(now())
+  changedAt     TimestamptzString    @default(now())
 }
 
 model Interview {
@@ -49,11 +49,11 @@ model Interview {
   applicationId Int
   application   Application @relation(fields: [applicationId], references: [id])
   roundName     String
-  scheduledDate DateTime
+  scheduledDate TimestamptzString
   meetingLink   String?
   interviewer   String?
   feedbackNotes String?
   status        String      @default("Scheduled")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @default(now())
+  createdAt     TimestamptzString    @default(now())
+  updatedAt     TimestamptzString    @default(now())
 }

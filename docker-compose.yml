@@ -1,38 +1,54 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: jobtracker-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: jobtracker_user
       POSTGRES_PASSWORD: jobtracker_password
       POSTGRES_DB: jobtracker_db
-    ports:
-      - "5432:5432"
+    # Uncomment to reach the database from your host (e.g. with psql)
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U jobtracker_user -d jobtracker_db"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  # One-off job: creates/updates the database tables, then exits
+  migrate:
+    build:
+      context: .
+      target: deps
+    command: ["npx", "prisma", "db", "init"]
+    environment:
+      DATABASE_URL: "postgresql://jobtracker_user:jobtracker_password@postgres:5432/jobtracker_db"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: jobtracker-api
+      target: runner
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     environment:
       PORT: 3000
       DATABASE_URL: "postgresql://jobtracker_user:jobtracker_password@postgres:5432/jobtracker_db"
-      JWT_SECRET: "development-super-secret-jwt-key-change-in-production-12345"
-      ALLOWED_ORIGIN: "*"
+      # Change this before deploying anywhere public (min. 32 characters)
+      JWT_SECRET: "${JWT_SECRET:-development-super-secret-jwt-key-change-in-production-12345}"
+      ALLOWED_ORIGIN: "${ALLOWED_ORIGIN:-*}"
+      ADMIN_EMAILS: "${ADMIN_EMAILS:-}"
+    volumes:
+      - resume_uploads:/app/uploads
 
 volumes:
   postgres_data:
+  resume_uploads:

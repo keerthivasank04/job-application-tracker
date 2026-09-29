@@ -1,43 +1,37 @@
-# Multi-stage Dockerfile for Job Tracker API
-FROM node:22-alpine AS builder
+# syntax=docker/dockerfile:1
 
+# ---------- Stage 1: full dependency install + typecheck ----------
+FROM node:22-alpine AS deps
 WORKDIR /app
 
-# Copy dependency specifications
 COPY package*.json ./
+RUN npm ci --ignore-scripts
 
-# Install all dependencies including devDependencies for build
-RUN npm install
-
-# Copy source code and Prisma contract files
 COPY . .
+# Fail the build on type errors
+RUN npx tsc --noEmit
 
-# Emit contract and compile TypeScript
-RUN npx prisma contract emit && npm run build
-
-# Production runtime stage
+# ---------- Stage 2: production runtime ----------
 FROM node:22-alpine AS runner
-
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=3000
+ENV NODE_ENV=production \
+    PORT=3000
 
-# Copy package files
 COPY package*.json ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-# Install production dependencies only
-RUN npm install --omit=dev
+COPY --from=deps /app/tsconfig.json ./
+COPY --from=deps /app/src ./src
+COPY --from=deps /app/public ./public
 
-# Copy compiled code, prisma contracts, and config from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/prisma ./src/prisma
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/public ./public
+RUN mkdir -p uploads/resumes && chown -R node:node /app/uploads
+USER node
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
-CMD ["node", "dist/src/index.js"]
+# TypeScript is executed directly through tsx (handles ESM + JSON contract imports)
+CMD ["node", "--import", "tsx", "src/index.ts"]

@@ -5,13 +5,13 @@ export const swaggerSpec = {
   openapi: '3.0.0',
   info: {
     title: 'Job Tracker API',
-    version: '1.0.0',
+    version: '1.2.0',
     description: 'Type-safe REST API for managing and tracking job applications built with Express.js and Prisma 8.',
   },
   servers: [
     {
-      url: 'http://localhost:3000',
-      description: 'Local development server',
+      url: '/',
+      description: 'This server',
     },
   ],
   components: {
@@ -29,7 +29,8 @@ export const swaggerSpec = {
         required: ['email', 'password'],
         properties: {
           email: { type: 'string', format: 'email', example: 'user@example.com' },
-          password: { type: 'string', minLength: 8, example: 'SecurePassword123' },
+          password: { type: 'string', minLength: 8, maxLength: 128, example: 'SecurePassword123' },
+          name: { type: 'string', maxLength: 100, example: 'Alex Morgan' },
         },
       },
       LoginRequest: {
@@ -90,9 +91,9 @@ export const swaggerSpec = {
       UpdateProfileRequest: {
         type: 'object',
         properties: {
-          name: { type: 'string', example: 'John Doe' },
-          linkedinUrl: { type: 'string', example: 'https://linkedin.com/in/johndoe' },
-          githubUrl: { type: 'string', example: 'https://github.com/johndoe' },
+          name: { type: 'string', nullable: true, example: 'John Doe' },
+          linkedinUrl: { type: 'string', nullable: true, format: 'uri', description: 'http(s) URL, or null to clear', example: 'https://linkedin.com/in/johndoe' },
+          githubUrl: { type: 'string', nullable: true, format: 'uri', description: 'http(s) URL, or null to clear', example: 'https://github.com/johndoe' },
         },
       },
       Application: {
@@ -157,7 +158,8 @@ export const swaggerSpec = {
           salaryMax: { type: 'integer', example: 150000 },
           currency: { type: 'string', default: 'USD', example: 'USD' },
           jobLocation: { type: 'string', example: 'Remote' },
-          jobPostUrl: { type: 'string', example: 'https://careers.google.com/jobs/123' },
+          jobPostUrl: { type: 'string', format: 'uri', example: 'https://careers.google.com/jobs/123' },
+          appliedDate: { type: 'string', format: 'date-time', description: 'Defaults to now', example: '2026-09-01T10:30:00.000Z' },
         },
       },
       UpdateApplicationRequest: {
@@ -175,8 +177,15 @@ export const swaggerSpec = {
           salaryMax: { type: 'integer', example: 160000 },
           currency: { type: 'string', example: 'USD' },
           jobLocation: { type: 'string', example: 'Hybrid' },
-          jobPostUrl: { type: 'string', example: 'https://careers.google.com/jobs/123' },
+          jobPostUrl: { type: 'string', nullable: true, format: 'uri', example: 'https://careers.google.com/jobs/123' },
+          appliedDate: { type: 'string', format: 'date-time', example: '2026-09-01T10:30:00.000Z' },
+          statusNote: {
+            type: 'string',
+            description: 'Optional note stored on the status-history entry when `status` changes',
+            example: 'Recruiter called for round 1',
+          },
         },
+        description: 'All fields optional. Send null to clear optional fields (notes, salary, location, URL).',
       },
       StatusHistory: {
         type: 'object',
@@ -301,13 +310,18 @@ export const swaggerSpec = {
                   properties: {
                     id: { type: 'integer', example: 1 },
                     email: { type: 'string', example: 'user@example.com' },
+                    name: { type: 'string', nullable: true, example: 'Alex Morgan' },
                   },
                 },
               },
             },
           },
           400: {
-            description: 'Validation failed or email already registered',
+            description: 'Validation failed',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+          },
+          409: {
+            description: 'Email already registered',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
           },
         },
@@ -714,6 +728,35 @@ export const swaggerSpec = {
         },
       },
     },
+    '/interviews': {
+      get: {
+        summary: "List interviews across all of the caller's applications",
+        tags: ['Interviews'],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'upcoming', in: 'query', required: false, schema: { type: 'boolean' }, description: 'Only future rounds with status Scheduled' },
+        ],
+        responses: {
+          200: {
+            description: 'Interviews sorted by date, each including the company and role of its application',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    allOf: [
+                      { $ref: '#/components/schemas/Interview' },
+                      { type: 'object', properties: { company: { type: 'string' }, role: { type: 'string' } } },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
     '/interviews/{id}': {
       get: {
         summary: 'Get single interview by ID',
@@ -785,7 +828,8 @@ export const swaggerSpec = {
     },
     '/admin/stats': {
       get: {
-        summary: 'Get user application statistics',
+        summary: 'Cross-user application statistics (admins only)',
+        description: 'Restricted to the accounts listed in the ADMIN_EMAILS environment variable.',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
         responses: {
@@ -814,6 +858,7 @@ export const swaggerSpec = {
             },
           },
           401: { description: 'Unauthorized' },
+          403: { description: 'Caller is not an admin' },
         },
       },
     },
